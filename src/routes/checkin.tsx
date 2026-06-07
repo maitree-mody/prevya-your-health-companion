@@ -69,8 +69,6 @@ function CheckinPage() {
   const [emotion, setEmotion] = useState<Emotion>("calm");
   const [transcriptLog, setTranscriptLog] = useState<string[]>([]);
   const [summary, setSummary] = useState<Summary | null>(null);
-  const [agentId, setAgentId] = useState<string>("");
-  const [showSettings, setShowSettings] = useState(false);
 
   const conversation = useConversation({
     onMessage: (msg: any) => {
