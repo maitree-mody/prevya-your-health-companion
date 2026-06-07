@@ -1,10 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useConversation } from "@elevenlabs/react";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Mic, MicOff, CheckCircle2, Settings2 } from "lucide-react";
+import { useCallback, useState } from "react";
+import { Mic, MicOff, CheckCircle2 } from "lucide-react";
 import { PrevyaShell } from "@/components/PrevyaShell";
 import { SectionHeader } from "@/components/SectionHeader";
 import { supabase } from "@/integrations/supabase/client";
+
+const PREVYA_AGENT_ID = "agent_5901kth9g167f7grv0ndphzkz8ss";
 
 export const Route = createFileRoute("/checkin")({
   head: () => ({
@@ -67,14 +69,6 @@ function CheckinPage() {
   const [emotion, setEmotion] = useState<Emotion>("calm");
   const [transcriptLog, setTranscriptLog] = useState<string[]>([]);
   const [summary, setSummary] = useState<Summary | null>(null);
-  const [agentId, setAgentId] = useState<string>("");
-  const [showSettings, setShowSettings] = useState(false);
-
-  useEffect(() => {
-    const stored = localStorage.getItem("prevya:elevenlabs:agentId");
-    if (stored) setAgentId(stored);
-    else setShowSettings(true);
-  }, []);
 
   const conversation = useConversation({
     onMessage: (msg: any) => {
@@ -88,15 +82,15 @@ function CheckinPage() {
 
   const status = conversation.status;
   const isActive = status === "connected";
+  const isConnecting = status === "connecting";
 
   const start = useCallback(async () => {
-    if (!agentId) { setShowSettings(true); return; }
     setSummary(null);
     setTranscriptLog([]);
     try {
       await navigator.mediaDevices.getUserMedia({ audio: true });
       await conversation.startSession({
-        agentId,
+        agentId: PREVYA_AGENT_ID,
         connectionType: "webrtc",
         overrides: {
           agent: {
@@ -110,7 +104,7 @@ function CheckinPage() {
     } catch (e) {
       console.error("startSession failed", e);
     }
-  }, [agentId, conversation]);
+  }, [conversation]);
 
   const stop = useCallback(async () => {
     await conversation.endSession();
@@ -147,13 +141,15 @@ function CheckinPage() {
   }, [conversation, transcriptLog, emotion]);
 
   const cfg = emotionConfig[emotion];
-  const showPrompt = !isActive && !summary;
+  const showPrompt = !isActive && !summary && !isConnecting;
 
-  const saveAgent = (v: string) => {
-    localStorage.setItem("prevya:elevenlabs:agentId", v.trim());
-    setAgentId(v.trim());
-    setShowSettings(false);
-  };
+  const statusLabel = isConnecting
+    ? "Connecting to Prevya..."
+    : isActive
+      ? "Prevya is listening"
+      : summary
+        ? "Session complete"
+        : "Tap to talk to Prevya";
 
   return (
     <PrevyaShell>
@@ -161,39 +157,8 @@ function CheckinPage() {
         eyebrow="Daily check-in"
         title="Take a breath. I'm here."
         description="Tap the mic and just talk. I'll listen for symptoms, patterns, and how you're feeling."
-        action={
-          <button
-            onClick={() => setShowSettings(s => !s)}
-            className="flex items-center gap-2 rounded-full border bg-card px-4 py-2 text-xs text-muted-foreground hover:text-foreground"
-          >
-            <Settings2 className="h-3.5 w-3.5" /> Voice agent
-          </button>
-        }
       />
 
-      {showSettings && (
-        <div className="surface mb-6 p-5">
-          <div className="text-sm font-medium">ElevenLabs Agent ID</div>
-          <div className="mt-1 text-xs text-muted-foreground">
-            Create a public Conversational AI agent in ElevenLabs, then paste its Agent ID here.
-          </div>
-          <div className="mt-3 flex gap-2">
-            <input
-              defaultValue={agentId}
-              placeholder="agent_xxxxxxxxxxxxxxxxxxxx"
-              className="flex-1 rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-accent"
-              onKeyDown={(e) => { if (e.key === "Enter") saveAgent((e.target as HTMLInputElement).value); }}
-              id="agent-input"
-            />
-            <button
-              onClick={() => saveAgent((document.getElementById("agent-input") as HTMLInputElement).value)}
-              className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-            >
-              Save
-            </button>
-          </div>
-        </div>
-      )}
 
       <div className="surface relative flex flex-col items-center justify-center overflow-hidden px-6 py-16">
         {/* Blob */}
@@ -219,7 +184,7 @@ function CheckinPage() {
         {/* Emotion label */}
         <div className="mt-6 text-center transition-opacity duration-500">
           <div className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-            {isActive ? "Prevya is listening" : summary ? "Session complete" : "Right now you feel"}
+            {statusLabel}
           </div>
           <div className="mt-1 font-display text-2xl font-semibold tracking-tight text-foreground">
             {cfg.label}
