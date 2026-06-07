@@ -6,16 +6,6 @@ import { PrevyaShell } from "@/components/PrevyaShell";
 import { SectionHeader } from "@/components/SectionHeader";
 import { supabase } from "@/integrations/supabase/client";
 
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      "elevenlabs-convai": React.DetailedHTMLProps<
-        React.HTMLAttributes<HTMLElement> & { "agent-id": string },
-        HTMLElement
-      >;
-    }
-  }
-}
 
 const PREVYA_AGENT_ID = "agent_5901kth9g167f7grv0ndphzkz8ss";
 
