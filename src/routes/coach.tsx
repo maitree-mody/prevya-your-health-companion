@@ -249,20 +249,17 @@ function CoachPage() {
             language: "en",
           },
         },
-      });
-      await supabase.from("agent_actions").insert({
-        user_id: DEMO_USER_ID,
-        agent_name: "voice_agent",
-        action_type: "roleplay_started",
-        action_detail: `🗣️ Voice: roleplay started — ${specialist} appointment prep`,
-        status: "running",
-      });
+      } as any);
     } catch (err) {
       console.error("[Prevya coach] failed to start roleplay", err);
       setRpError(err instanceof Error ? err.message : "Could not start roleplay.");
       setRpStatus("idle");
     }
-  }, [conversation, specialist]);
+  }, [conversation]);
+
+  const stopRoleplay = useCallback(async () => {
+    await conversation.endSession();
+  }, [conversation]);
 
   const stopRoleplay = useCallback(async () => {
     await conversation.endSession();
