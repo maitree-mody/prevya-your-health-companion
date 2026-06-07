@@ -1,7 +1,7 @@
 'use client';
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, Send } from "lucide-react";
+import { ChevronDown, ChevronLeft, Send } from "lucide-react";
 
 export const Route = createFileRoute("/coach")({
   ssr: false,
@@ -358,6 +358,9 @@ function CoachPage() {
       <div style={{ maxWidth: 1200, margin: "0 auto" }}>
         {/* Header */}
         <div className="mb-8">
+          <Link to="/home" className="inline-flex items-center gap-1.5 text-sm text-[#888] hover:text-[#1B2A4A] transition mb-4">
+            <ChevronLeft className="h-4 w-4" /> Back to main menu
+          </Link>
           <div className="text-[11px] uppercase tracking-[0.18em] text-[#888] mb-2">Appointment concierge</div>
           <div className="flex flex-wrap items-end gap-4">
             <div>
