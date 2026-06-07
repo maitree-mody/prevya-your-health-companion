@@ -145,13 +145,13 @@ function Landing() {
         </Link>
         <nav className="flex items-center gap-5">
           <Link
-            to="/auth"
+            to="/onboarding"
             className="text-sm font-medium transition-opacity hover:opacity-70"
             style={{ color: PALETTE.ink }}
           >
             Sign in
           </Link>
-          <PrimaryBtn to="/checkin">Get started</PrimaryBtn>
+          <PrimaryBtn to="/onboarding">Get started</PrimaryBtn>
         </nav>
       </header>
 
@@ -180,7 +180,7 @@ function Landing() {
             that coaches you through every doctor's visit so you walk out with answers, not shrugs.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
-            <PrimaryBtn to="/checkin">Talk to Aria</PrimaryBtn>
+            <PrimaryBtn to="/onboarding">Talk to Aria</PrimaryBtn>
             <OutlineBtn to="/upload">Track your symptoms</OutlineBtn>
           </div>
           <div
@@ -323,7 +323,7 @@ function Landing() {
           the next woman doesn't wait a decade for an answer.
         </blockquote>
         <div className="mt-12">
-          <PrimaryBtn to="/checkin" wide>
+          <PrimaryBtn to="/onboarding" wide>
             Start your first conversation
           </PrimaryBtn>
         </div>
