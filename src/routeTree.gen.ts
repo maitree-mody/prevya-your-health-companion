@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as UploadRouteImport } from './routes/upload'
 import { Route as TimelineRouteImport } from './routes/timeline'
 import { Route as PictureRouteImport } from './routes/picture'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as NutritionRouteImport } from './routes/nutrition'
 import { Route as JourneyRouteImport } from './routes/journey'
 import { Route as HomeRouteImport } from './routes/home'
@@ -33,6 +34,11 @@ const TimelineRoute = TimelineRouteImport.update({
 const PictureRoute = PictureRouteImport.update({
   id: '/picture',
   path: '/picture',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NutritionRoute = NutritionRouteImport.update({
@@ -79,6 +85,7 @@ export interface FileRoutesByFullPath {
   '/home': typeof HomeRoute
   '/journey': typeof JourneyRoute
   '/nutrition': typeof NutritionRoute
+  '/onboarding': typeof OnboardingRoute
   '/picture': typeof PictureRoute
   '/timeline': typeof TimelineRoute
   '/upload': typeof UploadRoute
@@ -91,6 +98,7 @@ export interface FileRoutesByTo {
   '/home': typeof HomeRoute
   '/journey': typeof JourneyRoute
   '/nutrition': typeof NutritionRoute
+  '/onboarding': typeof OnboardingRoute
   '/picture': typeof PictureRoute
   '/timeline': typeof TimelineRoute
   '/upload': typeof UploadRoute
@@ -104,6 +112,7 @@ export interface FileRoutesById {
   '/home': typeof HomeRoute
   '/journey': typeof JourneyRoute
   '/nutrition': typeof NutritionRoute
+  '/onboarding': typeof OnboardingRoute
   '/picture': typeof PictureRoute
   '/timeline': typeof TimelineRoute
   '/upload': typeof UploadRoute
@@ -118,6 +127,7 @@ export interface FileRouteTypes {
     | '/home'
     | '/journey'
     | '/nutrition'
+    | '/onboarding'
     | '/picture'
     | '/timeline'
     | '/upload'
@@ -130,6 +140,7 @@ export interface FileRouteTypes {
     | '/home'
     | '/journey'
     | '/nutrition'
+    | '/onboarding'
     | '/picture'
     | '/timeline'
     | '/upload'
@@ -142,6 +153,7 @@ export interface FileRouteTypes {
     | '/home'
     | '/journey'
     | '/nutrition'
+    | '/onboarding'
     | '/picture'
     | '/timeline'
     | '/upload'
@@ -155,6 +167,7 @@ export interface RootRouteChildren {
   HomeRoute: typeof HomeRoute
   JourneyRoute: typeof JourneyRoute
   NutritionRoute: typeof NutritionRoute
+  OnboardingRoute: typeof OnboardingRoute
   PictureRoute: typeof PictureRoute
   TimelineRoute: typeof TimelineRoute
   UploadRoute: typeof UploadRoute
@@ -181,6 +194,13 @@ declare module '@tanstack/react-router' {
       path: '/picture'
       fullPath: '/picture'
       preLoaderRoute: typeof PictureRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/nutrition': {
@@ -243,6 +263,7 @@ const rootRouteChildren: RootRouteChildren = {
   HomeRoute: HomeRoute,
   JourneyRoute: JourneyRoute,
   NutritionRoute: NutritionRoute,
+  OnboardingRoute: OnboardingRoute,
   PictureRoute: PictureRoute,
   TimelineRoute: TimelineRoute,
   UploadRoute: UploadRoute,
@@ -250,3 +271,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
