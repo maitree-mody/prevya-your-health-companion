@@ -1,9 +1,10 @@
+'use client';
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, Send } from "lucide-react";
-import Groq from "groq-sdk";
 
 export const Route = createFileRoute("/coach")({
+  ssr: false,
   head: () => ({
     meta: [
       { title: "Aria · Prevya" },
@@ -13,12 +14,7 @@ export const Route = createFileRoute("/coach")({
   component: CoachPage,
 });
 
-// ─── Groq setup ───────────────────────────────────────────────────────────────
-
-const groq = new Groq({
-  apiKey: import.meta.env.VITE_GROQ_API_KEY,
-  dangerouslyAllowBrowser: true,
-});
+// ─── Groq (dynamic import — never runs during SSR) ────────────────────────────
 
 const ARIA_SYSTEM_PROMPT = `You are Aria, a warm personal medical concierge for women with autoimmune and reproductive health conditions.
 
@@ -46,6 +42,11 @@ Rules:
 type Message = { role: "user" | "assistant"; content: string };
 
 async function sendToAria(userMessage: string, history: Message[]): Promise<string> {
+  const { default: Groq } = await import("groq-sdk");
+  const groq = new Groq({
+    apiKey: import.meta.env.VITE_GROQ_API_KEY,
+    dangerouslyAllowBrowser: true,
+  });
   const completion = await groq.chat.completions.create({
     model: "llama-3.3-70b-versatile",
     messages: [
@@ -348,6 +349,10 @@ function VoiceWidget() {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 function CoachPage() {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return null;
+
   return (
     <div style={{ minHeight: "100vh", background: "#FAF8F5", padding: "40px 24px", fontFamily: "Inter, sans-serif" }}>
       <div style={{ maxWidth: 1200, margin: "0 auto" }}>
