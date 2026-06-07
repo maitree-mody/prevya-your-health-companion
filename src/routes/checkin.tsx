@@ -1,12 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ConversationProvider, useConversation } from "@elevenlabs/react";
-import { useServerFn } from "@tanstack/react-start";
 import { Component, useCallback, useState, type ErrorInfo, type ReactNode } from "react";
 import { Mic, MicOff, CheckCircle2 } from "lucide-react";
 import { PrevyaShell } from "@/components/PrevyaShell";
 import { SectionHeader } from "@/components/SectionHeader";
 import { supabase } from "@/integrations/supabase/client";
-import { getPrevyaConversationToken } from "@/lib/elevenlabs.functions";
 
 const PREVYA_AGENT_ID = "agent_5901kth9g167f7grv0ndphzkz8ss";
 
