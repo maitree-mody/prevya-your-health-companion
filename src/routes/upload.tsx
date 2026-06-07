@@ -32,7 +32,7 @@ type ProcessedDoc = {
   source: string;
   symptomsFound: number;
   labsExtracted: number;
-  uploadedAt: string;
+  uploadedAt: string | null;
 };
 
 type InFlight = {
