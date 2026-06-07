@@ -261,16 +261,6 @@ function CoachPage() {
     await conversation.endSession();
   }, [conversation]);
 
-  const stopRoleplay = useCallback(async () => {
-    await conversation.endSession();
-    await supabase.from("agent_actions").insert({
-      user_id: DEMO_USER_ID,
-      agent_name: "voice_agent",
-      action_type: "roleplay_ended",
-      action_detail: `🗣️ Voice: roleplay debriefed — ${specialist}`,
-      status: "complete",
-    });
-  }, [conversation, specialist]);
 
   const points = TALKING_POINTS[specialist];
 
