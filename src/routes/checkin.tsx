@@ -317,6 +317,13 @@ function CheckinExperience() {
         )}
       </div>
 
+      {/* Official ElevenLabs widget */}
+      <div className="mt-6 flex justify-center">
+        <elevenlabs-convai agent-id={PREVYA_AGENT_ID} />
+      </div>
+
+
+
       {/* Summary card */}
       {summary && (
         <div className="surface mt-6 animate-fade-in p-6">
