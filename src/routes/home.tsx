@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { PrevyaShell } from "@/components/PrevyaShell";
 import { SectionHeader } from "@/components/SectionHeader";
 import { MonitoringDashboard } from "@/components/MonitoringDashboard";
+import { OrchestratorPanel } from "@/components/OrchestratorPanel";
 import {
   Activity,
   AlertCircle,
@@ -53,6 +54,10 @@ function Home() {
           </button>
         }
       />
+
+      <OrchestratorPanel />
+
+
 
       {/* Goal + appointment row */}
       <div className="grid gap-5 lg:grid-cols-3">
