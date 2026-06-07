@@ -44,25 +44,9 @@ export async function generateDossier() {
   return data
 }
 
-// Base URL for the Next.js API (same origin in prod; localhost:3000 in local dev)
-const NEXT_API = import.meta.env.VITE_NEXT_API_URL ?? 'http://localhost:3004'
-
 export async function runFullDemo() {
   const userId = await getCurrentUserId()
 
-  // Try the server-side endpoint first (proper sequencing, reliable timing)
-  try {
-    const res = await fetch(`${NEXT_API}/api/demo/run`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId }),
-    })
-    if (res.ok) return await res.json()
-  } catch {
-    // Next.js server not reachable — fall back to client-side inserts
-  }
-
-  // Fallback: client-side timed inserts via Supabase directly
   const items = [
     { agent: 'intake_agent',    msg: '📂 Intake: Reading 6 years of medical records...',                         status: 'running',  delay: 0     },
     { agent: 'intake_agent',    msg: '📂 Intake: 3 GP letters, 8 blood tests, 2 referral letters processed ✅',  status: 'complete', delay: 2000  },

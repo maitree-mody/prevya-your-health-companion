@@ -62,6 +62,28 @@ type Diagnosis = {
   conditions: unknown;
 };
 
+const DEMO_SARAH: UserRow = {
+  name: "Sarah",
+  age: 34,
+  current_goal: "Get a real diagnosis for the pelvic pain — and a plan.",
+  fertility_intent: true,
+  conditions_suspected: ["Endometriosis", "APS", "Lupus"],
+  created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 180).toISOString(),
+};
+
+const DEMO_DIAGNOSIS: Diagnosis = {
+  doctor_summary:
+    "I've been managing chronic, cyclical pelvic pain for several years. Over the last 12 months it has worsened in both intensity and the breadth of symptoms it produces — fatigue, cognitive fog, and dyspareunia. Pattern analysis flagged a high probability of APS (ANA positive, 2 prior miscarriages, joint pain pattern). I'm here because the current management plan is no longer enough, and I'd like a partner in figuring out what's actually driving this.",
+  recommended_tests: [
+    { name: "Pelvic MRI (endometriosis protocol)", rationale: "Persistent cyclical pelvic pain.", urgency: "urgent" },
+    { name: "Anticardiolipin antibodies + lupus anticoagulant", rationale: "APS probability HIGH from pattern analysis.", urgency: "urgent" },
+    { name: "ANA + anti-dsDNA panel", rationale: "Autoimmune contribution suspected.", urgency: "urgent" },
+    { name: "Thyroid panel (TSH, fT4, anti-TPO)", rationale: "Rising TSH + fatigue pattern.", urgency: "soon" },
+    { name: "Ferritin recheck", rationale: "Monitor recovery on supplementation.", urgency: "routine" },
+  ],
+  conditions: ["Endometriosis", "APS (Antiphospholipid Syndrome)", "Possible Lupus"],
+};
+
 function fmtTime(d: Date) {
   return d.toLocaleString(undefined, {
     month: "short",
@@ -114,11 +136,11 @@ function Dossier() {
       supabase.from("patterns").select("*").eq("user_id", DEMO_USER_ID).order("first_detected", { ascending: false }).limit(10),
       supabase.from("diagnosis_results").select("*").eq("user_id", DEMO_USER_ID).order("created_at", { ascending: false }).limit(1).maybeSingle(),
     ]);
-    setUser((u.data as UserRow) ?? null);
+    setUser((u.data as UserRow) ?? DEMO_SARAH);
     setCheckins(((c.data as Checkin[]) ?? []).reverse());
     setEvents((e.data as TimelineEvent[]) ?? []);
     setPatterns((p.data as Pattern[]) ?? []);
-    setDiagnosis((d.data as Diagnosis) ?? null);
+    setDiagnosis((d.data as Diagnosis) ?? DEMO_DIAGNOSIS);
     setLastUpdated(new Date());
     setLoading(false);
   }

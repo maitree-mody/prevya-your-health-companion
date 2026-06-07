@@ -1,5 +1,3 @@
-<!-- BEGIN:nextjs-agent-rules -->
-# This is NOT the Next.js you know
+# Prevya — Agent rules
 
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
-<!-- END:nextjs-agent-rules -->
+This is a **TanStack Start** app (not Next.js). File-based routing lives in `src/routes/`. Server functions use `createServerFn` from `@tanstack/react-start`. Do not add Next.js conventions or imports.
