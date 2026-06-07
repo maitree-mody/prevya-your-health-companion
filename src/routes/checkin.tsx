@@ -136,15 +136,23 @@ function CheckinExperience() {
 
   const conversation = useConversation({
     onMessage: (msg: any) => {
-      console.log("[Prevya checkin] ElevenLabs message", msg);
-      const text: string | undefined = msg?.message || msg?.text || msg?.user_transcription_event?.user_transcript;
-      if (!text) return;
-      setTranscriptLog(prev => [...prev, text]);
-      setEmotion(detectEmotion(text));
+      try {
+        const text =
+          msg?.message ||
+          msg?.text ||
+          msg?.user_transcription_event?.user_transcript ||
+          (typeof msg === "string" ? msg : null);
+        if (!text) return;
+        console.log("message received:", text);
+        setTranscriptLog(prev => [...prev, text]);
+        setEmotion(detectEmotion(text));
+      } catch (e) {
+        console.log("ignoring malformed message");
+      }
     },
     onConnect: (event: any) => console.log("[Prevya checkin] ElevenLabs connected", event),
     onDisconnect: () => console.log("[Prevya checkin] ElevenLabs disconnected"),
-    onError: (e: any) => console.error("[Prevya checkin] ElevenLabs error", e),
+    onError: (e: any) => console.error("elevenlabs error", e),
     onStatusChange: (status: any) => console.log("[Prevya checkin] ElevenLabs status", status),
   });
 
