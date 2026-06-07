@@ -3,6 +3,7 @@ import { PrevyaShell } from "@/components/PrevyaShell";
 import { SectionHeader } from "@/components/SectionHeader";
 import { MonitoringDashboard } from "@/components/MonitoringDashboard";
 import { OrchestratorPanel } from "@/components/OrchestratorPanel";
+import { AdvocatePanel } from "@/components/AdvocatePanel";
 import {
   Activity,
   AlertCircle,
@@ -99,6 +100,8 @@ function Home() {
       </div>
 
       <MonitoringDashboard />
+
+      <AdvocatePanel />
 
       {/* Urgent + Feed */}
       <div className="mt-6 grid gap-5 lg:grid-cols-5">
