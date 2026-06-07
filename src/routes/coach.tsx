@@ -203,8 +203,21 @@ function CoachPage() {
       setRpStatus("ended");
       setSessionSummary(TALKING_POINTS[specialist].map((p) => p.title));
     },
-    onError: (e) => {
-      console.error("[Prevya coach] roleplay error", e);
+    onMessage: (msg: any) => {
+      try {
+        const text =
+          msg?.message ||
+          msg?.text ||
+          msg?.user_transcription_event?.user_transcript ||
+          (typeof msg === "string" ? msg : null);
+        if (!text) return;
+        console.log("message received:", text);
+      } catch (e) {
+        console.log("ignoring malformed message");
+      }
+    },
+    onError: (e: any) => {
+      console.error("elevenlabs error", e);
       setRpError(typeof e === "string" ? e : "Roleplay disconnected.");
       setRpStatus("idle");
     },
