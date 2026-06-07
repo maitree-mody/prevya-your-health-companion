@@ -145,13 +145,13 @@ function Landing() {
         </Link>
         <nav className="flex items-center gap-5">
           <Link
-            to="/auth"
+            to="/onboarding"
             className="text-sm font-medium transition-opacity hover:opacity-70"
             style={{ color: PALETTE.ink }}
           >
             Sign in
           </Link>
-          <PrimaryBtn to="/checkin">Get started</PrimaryBtn>
+          <PrimaryBtn to="/onboarding">Get started</PrimaryBtn>
         </nav>
       </header>
 
