@@ -5,6 +5,7 @@ import {
   ClipboardList,
   Compass,
   FileText,
+  MessageSquareHeart,
   Mic,
   Salad,
   Sparkles,
@@ -21,6 +22,7 @@ const nav = [
   { to: "/picture", label: "My Picture", icon: ClipboardList },
   { to: "/timeline", label: "Timeline", icon: CalendarHeart },
   { to: "/dossier", label: "My Dossier", icon: FileText },
+  { to: "/coach", label: "Appointment Coach", icon: MessageSquareHeart },
   { to: "/nutrition", label: "Nutrition", icon: Salad },
   { to: "/journey", label: "My Journey", icon: Compass },
 ] as const;
