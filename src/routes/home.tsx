@@ -76,27 +76,33 @@ function HomePage() {
         </div>
 
         {/* Nav links */}
-        <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '10px', marginBottom: '32px'}}>
-          {[
-            { to: '/checkin',   label: '🎙️ Daily Check-in' },
-            { to: '/dossier',   label: '📋 My Dossier' },
-            { to: '/coach',     label: '💬 Appointment Coach' },
-            { to: '/nutrition', label: '🥗 Nutrition' },
-            { to: '/timeline',  label: '📅 Timeline' },
-            { to: '/journey',   label: '🧭 My Journey' },
-            { to: '/upload',    label: '📤 Upload Records' },
-            { to: '/picture',   label: '🖼️ My Picture' },
-          ].map(({ to, label }) => (
-            <Link key={to} to={to} style={{
-              display: 'block', padding: '12px 16px',
-              background: 'white', border: '1px solid #E5DACE',
-              borderRadius: '10px', textDecoration: 'none',
-              color: '#1B2A4A', fontSize: '13px', fontWeight: '500',
-              transition: 'border-color 0.15s',
-            }}>
-              {label}
-            </Link>
-          ))}
+        <div style={{marginBottom: '32px'}}>
+          <div style={{fontSize: '11px', textTransform: 'uppercase',
+            letterSpacing: '0.15em', color: '#888', marginBottom: '12px'}}>
+            Explore Prevya
+          </div>
+          <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '10px'}}>
+            {[
+              { to: '/checkin',   label: '🎙️ Daily Check-in' },
+              { to: '/dossier',   label: '📋 My Dossier' },
+              { to: '/coach',     label: '💬 Appointment Coach' },
+              { to: '/nutrition', label: '🥗 Nutrition' },
+              { to: '/timeline',  label: '📅 Timeline' },
+              { to: '/journey',   label: '🧭 My Journey' },
+              { to: '/upload',    label: '📤 Upload Records' },
+              { to: '/picture',   label: '🖼️ My Picture' },
+            ].map(({ to, label }) => (
+              <Link key={to} to={to} style={{
+                display: 'block', padding: '14px 16px',
+                background: 'white',
+                border: '1.5px solid #D4788A',
+                borderRadius: '10px', textDecoration: 'none',
+                color: '#1B2A4A', fontSize: '13px', fontWeight: '600',
+              }}>
+                {label}
+              </Link>
+            ))}
+          </div>
         </div>
 
         <div style={{
