@@ -180,7 +180,7 @@ function Landing() {
             that coaches you through every doctor's visit so you walk out with answers, not shrugs.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
-            <PrimaryBtn to="/checkin">Talk to Aria</PrimaryBtn>
+            <PrimaryBtn to="/onboarding">Talk to Aria</PrimaryBtn>
             <OutlineBtn to="/upload">Track your symptoms</OutlineBtn>
           </div>
           <div
