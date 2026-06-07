@@ -1,10 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ConversationProvider, useConversation } from "@elevenlabs/react";
-import { Component, useCallback, useState, type ErrorInfo, type ReactNode } from "react";
+import { Component, useCallback, useEffect, useState, type ErrorInfo, type ReactNode } from "react";
 import { Mic, MicOff, CheckCircle2 } from "lucide-react";
 import { PrevyaShell } from "@/components/PrevyaShell";
 import { SectionHeader } from "@/components/SectionHeader";
 import { supabase } from "@/integrations/supabase/client";
+
 
 const PREVYA_AGENT_ID = "agent_5901kth9g167f7grv0ndphzkz8ss";
 
@@ -133,6 +134,17 @@ function CheckinExperience() {
   const [transcriptLog, setTranscriptLog] = useState<string[]>([]);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [tokenError, setTokenError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "https://unpkg.com/@elevenlabs/convai-widget-embed";
+    script.async = true;
+    script.type = "text/javascript";
+    document.body.appendChild(script);
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
 
   const conversation = useConversation({
     onMessage: (msg: any) => {
@@ -294,6 +306,17 @@ function CheckinExperience() {
           </div>
         )}
       </div>
+
+      {/* Official ElevenLabs widget */}
+      <div className="mt-6 flex justify-center">
+        {(() => {
+          const Widget = "elevenlabs-convai" as any;
+          return <Widget agent-id={PREVYA_AGENT_ID} />;
+        })()}
+      </div>
+
+
+
 
       {/* Summary card */}
       {summary && (
