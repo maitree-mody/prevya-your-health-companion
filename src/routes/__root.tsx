@@ -92,12 +92,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:title", content: "Prevya — Your autonomous medical advocate" },
-      { name: "description", content: "Prevya is an AI medical advocate for women with autoimmune and reproductive health conditions." },
-      { property: "og:description", content: "Prevya is an AI medical advocate for women with autoimmune and reproductive health conditions." },
-      { name: "twitter:description", content: "Prevya is an AI medical advocate for women with autoimmune and reproductive health conditions." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/1d2c6725-d4ae-40cf-9661-15c2de48eb0f/id-preview-e1f71fe5--3cf2dcfc-8ca4-40b8-a939-721e61ec1b48.lovable.app-1780853804939.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/1d2c6725-d4ae-40cf-9661-15c2de48eb0f/id-preview-e1f71fe5--3cf2dcfc-8ca4-40b8-a939-721e61ec1b48.lovable.app-1780853804939.png" },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
