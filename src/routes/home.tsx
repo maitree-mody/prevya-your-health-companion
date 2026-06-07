@@ -4,6 +4,7 @@ import { SectionHeader } from "@/components/SectionHeader";
 import { MonitoringDashboard } from "@/components/MonitoringDashboard";
 import { OrchestratorPanel } from "@/components/OrchestratorPanel";
 import { AdvocatePanel } from "@/components/AdvocatePanel";
+import { ActivityFeed } from "@/components/ActivityFeed";
 import {
   Activity,
   AlertCircle,
@@ -55,6 +56,8 @@ function Home() {
           </button>
         }
       />
+
+      <ActivityFeed />
 
       <OrchestratorPanel />
 
