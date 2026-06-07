@@ -184,7 +184,7 @@ function CheckinPage() {
         {/* Emotion label */}
         <div className="mt-6 text-center transition-opacity duration-500">
           <div className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-            {isActive ? "Prevya is listening" : summary ? "Session complete" : "Right now you feel"}
+            {statusLabel}
           </div>
           <div className="mt-1 font-display text-2xl font-semibold tracking-tight text-foreground">
             {cfg.label}
