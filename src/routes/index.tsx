@@ -323,7 +323,7 @@ function Landing() {
           the next woman doesn't wait a decade for an answer.
         </blockquote>
         <div className="mt-12">
-          <PrimaryBtn to="/checkin" wide>
+          <PrimaryBtn to="/onboarding" wide>
             Start your first conversation
           </PrimaryBtn>
         </div>
