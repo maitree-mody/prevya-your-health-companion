@@ -18,30 +18,72 @@ const BLOB_COLOR = "#D4788A";
 
 function CheckinPage() {
   const [pulse, setPulse] = useState(false);
-  const widgetRef = useRef<HTMLDivElement>(null);
+  const [widgetReady, setWidgetReady] = useState(false);
+  const widgetElRef = useRef<HTMLElement | null>(null);
+
+  // Recursively search shadow DOMs for the first clickable button
+  function findWidgetButton(root: Element | null): HTMLElement | null {
+    if (!root) return null;
+    const queue: (Element | ShadowRoot)[] = [root];
+    while (queue.length) {
+      const node = queue.shift()!;
+      const btn = (node as Element).querySelector?.('button');
+      if (btn) return btn as HTMLElement;
+      const all = (node as Element).querySelectorAll?.('*') ?? [];
+      all.forEach((el) => {
+        const sr = (el as HTMLElement).shadowRoot;
+        if (sr) queue.push(sr);
+      });
+    }
+    return null;
+  }
 
   useEffect(() => {
-    // Create the custom element imperatively so React never touches it
+    // Mount the floating widget at body level (its config places it bottom-right).
+    // We'll trigger it from our own blob, so visually we keep it but pinned subtly.
     const widget = document.createElement('elevenlabs-convai');
     widget.setAttribute('agent-id', 'agent_5901kth9g167f7grv0ndphzkz8ss');
-    widgetRef.current?.appendChild(widget);
+    document.body.appendChild(widget);
+    widgetElRef.current = widget;
 
-    const script = document.createElement('script');
-    script.src = 'https://unpkg.com/@elevenlabs/convai-widget-embed';
-    script.async = true;
-    document.body.appendChild(script);
+    let script = document.getElementById('elevenlabs-convai-script') as HTMLScriptElement | null;
+    if (!script) {
+      script = document.createElement('script');
+      script.id = 'elevenlabs-convai-script';
+      script.src = 'https://unpkg.com/@elevenlabs/convai-widget-embed';
+      script.async = true;
+      document.body.appendChild(script);
+    }
+
+    // Poll for the widget's internal button so we can trigger it from the blob
+    const start = Date.now();
+    const interval = setInterval(() => {
+      const btn = findWidgetButton(widget);
+      if (btn) {
+        setWidgetReady(true);
+        clearInterval(interval);
+      } else if (Date.now() - start > 15000) {
+        clearInterval(interval);
+      }
+    }, 300);
 
     return () => {
-      if (widgetRef.current) widgetRef.current.innerHTML = '';
-      if (document.body.contains(script)) document.body.removeChild(script);
+      clearInterval(interval);
+      if (document.body.contains(widget)) document.body.removeChild(widget);
     };
-  }, [])
+  }, []);
 
   // Animate blob gently on load
   useEffect(() => {
     const t = setTimeout(() => setPulse(true), 300)
     return () => clearTimeout(t)
   }, [])
+
+  const handleBlobClick = () => {
+    // IMPORTANT: must be a sync call from the user gesture for mic permission
+    const btn = findWidgetButton(widgetElRef.current);
+    if (btn) btn.click();
+  };
 
   return (
     <PrevyaShell>
@@ -62,10 +104,16 @@ function CheckinPage() {
           Powered by ElevenLabs · Voice AI
         </div>
 
-        {/* Blob */}
-        <div className="relative flex h-[280px] w-[280px] items-center justify-center">
+        {/* Blob — clickable, triggers the ElevenLabs widget */}
+        <button
+          type="button"
+          onClick={handleBlobClick}
+          disabled={!widgetReady}
+          aria-label="Start voice check-in with Prevya"
+          className="relative flex h-[280px] w-[280px] items-center justify-center cursor-pointer disabled:cursor-wait group bg-transparent border-0 p-0"
+        >
           <div
-            className="blob-shape absolute inset-0 transition-all duration-700"
+            className="blob-shape absolute inset-0 transition-all duration-700 group-hover:scale-105"
             style={{
               background: `radial-gradient(circle at 35% 35%, ${BLOB_COLOR}, ${BLOB_COLOR}cc 60%, ${BLOB_COLOR}44)`,
               animation: `blobPulse 3.5s ease-in-out infinite`,
@@ -81,22 +129,21 @@ function CheckinPage() {
             }}
           />
           {/* Mic icon in center */}
-          <div className="relative z-10 flex h-20 w-20 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
+          <div className="relative z-10 flex h-20 w-20 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm transition-transform group-hover:scale-110 group-active:scale-95">
             <Mic className="h-9 w-9 text-white drop-shadow" />
           </div>
-        </div>
+        </button>
 
         {/* Label */}
         <div className="mt-6 text-center">
-          <div className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Prevya is ready</div>
+          <div className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+            {widgetReady ? 'Prevya is ready' : 'Connecting…'}
+          </div>
           <div className="mt-1 font-display text-2xl font-semibold tracking-tight">How are you feeling today?</div>
         </div>
 
-        {/* ElevenLabs widget — mounted imperatively via ref */}
-        <div ref={widgetRef} className="mt-8" />
-
         <p className="mt-4 text-xs text-muted-foreground">
-          Tap the mic button above · your voice stays private
+          Tap the mic to start · your voice stays private
         </p>
       </div>
 
