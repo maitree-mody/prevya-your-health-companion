@@ -5,6 +5,7 @@ import {
   ClipboardList,
   Compass,
   FileText,
+  Mic,
   Salad,
   Sparkles,
   UploadCloud,
@@ -15,6 +16,7 @@ import type { ReactNode } from "react";
 const nav = [
   { to: "/", label: "Onboarding", icon: Sparkles },
   { to: "/home", label: "Mission Control", icon: Activity },
+  { to: "/checkin", label: "Daily Check-in", icon: Mic },
   { to: "/upload", label: "Upload Records", icon: UploadCloud },
   { to: "/picture", label: "My Picture", icon: ClipboardList },
   { to: "/timeline", label: "Timeline", icon: CalendarHeart },
