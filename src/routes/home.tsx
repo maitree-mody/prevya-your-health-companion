@@ -25,6 +25,7 @@ import {
 } from "@/services/api";
 
 export const Route = createFileRoute("/home")({
+  ssr: false,
   head: () => ({
     meta: [
       { title: "Mission Control · Prevya" },
