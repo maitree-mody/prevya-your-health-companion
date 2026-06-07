@@ -319,8 +319,12 @@ function CheckinExperience() {
 
       {/* Official ElevenLabs widget */}
       <div className="mt-6 flex justify-center">
-        <elevenlabs-convai agent-id={PREVYA_AGENT_ID} />
+        {(() => {
+          const Widget = "elevenlabs-convai" as any;
+          return <Widget agent-id={PREVYA_AGENT_ID} />;
+        })()}
       </div>
+
 
 
 
