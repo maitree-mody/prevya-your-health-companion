@@ -93,6 +93,8 @@ function Home() {
         </div>
       </div>
 
+      <MonitoringDashboard />
+
       {/* Urgent + Feed */}
       <div className="mt-6 grid gap-5 lg:grid-cols-5">
         <div className="surface lg:col-span-2 p-6">
