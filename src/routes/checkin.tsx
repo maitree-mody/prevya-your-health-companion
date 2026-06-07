@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useConversation } from "@elevenlabs/react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { Mic, MicOff, CheckCircle2 } from "lucide-react";
 import { PrevyaShell } from "@/components/PrevyaShell";
 import { SectionHeader } from "@/components/SectionHeader";
