@@ -123,35 +123,42 @@ function Home() {
         title="Good morning. Here's what I'm working on."
         description="Prevya runs in the background — reading, listening, advocating. Tap anything to dive in."
         action={
-          <div className="flex flex-wrap items-center gap-2">
-            <button className="flex items-center gap-2 rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-accent-foreground shadow-sm transition hover:opacity-95">
-              <Mic className="h-4 w-4" /> Daily check-in
-            </button>
-            <button
-              onClick={handleRunDemo}
-              disabled={demoRunning}
-              className="flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition hover:opacity-95 disabled:opacity-60"
-            >
-              {demoRunning
-                ? <Loader2 className="h-4 w-4 animate-spin" />
-                : <Play className="h-4 w-4" />
-              }
-              {demoRunning ? "Running…" : "Run Demo"}
-            </button>
-            <button
-              onClick={handleReset}
-              disabled={resetting}
-              className="flex items-center gap-2 rounded-full border bg-card px-5 py-2.5 text-sm font-medium transition hover:border-accent disabled:opacity-60"
-            >
-              {resetting
-                ? <Loader2 className="h-4 w-4 animate-spin" />
-                : <RotateCcw className="h-4 w-4" />
-              }
-              Reset
-            </button>
-          </div>
+          <button className="flex items-center gap-2 rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-accent-foreground shadow-sm transition hover:opacity-95">
+            <Mic className="h-4 w-4" /> Daily check-in
+          </button>
         }
       />
+
+      {/* Prominent demo controls */}
+      <div className="mt-6 flex flex-wrap items-center gap-3 rounded-2xl border border-foreground/10 bg-card p-5 shadow-sm">
+        <button
+          onClick={handleRunDemo}
+          disabled={demoRunning}
+          className="flex items-center gap-3 rounded-full px-8 py-4 text-base font-semibold text-white shadow-md transition hover:opacity-95 disabled:opacity-60"
+          style={{ backgroundColor: "#B5673A" }}
+        >
+          {demoRunning
+            ? <Loader2 className="h-5 w-5 animate-spin" />
+            : <Play className="h-5 w-5 fill-current" />
+          }
+          {demoRunning ? "Running demo…" : "Run Demo"}
+        </button>
+        <button
+          onClick={handleReset}
+          disabled={resetting}
+          className="flex items-center gap-2 rounded-full border-2 px-6 py-4 text-base font-medium transition hover:bg-foreground/5 disabled:opacity-60"
+          style={{ borderColor: "#B5673A", color: "#B5673A" }}
+        >
+          {resetting
+            ? <Loader2 className="h-5 w-5 animate-spin" />
+            : <RotateCcw className="h-5 w-5" />
+          }
+          Reset
+        </button>
+        <p className="ml-auto text-sm text-muted-foreground">
+          Watch all agents fire in real time ↓
+        </p>
+      </div>
 
       <ActivityFeed />
 
