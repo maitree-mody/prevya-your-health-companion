@@ -251,7 +251,7 @@ function CoachPage() {
       setRpError(err instanceof Error ? err.message : "Could not start roleplay.");
       setRpStatus("idle");
     }
-  }, [conversation, fetchToken, specialist]);
+  }, [conversation, specialist]);
 
   const stopRoleplay = useCallback(async () => {
     await conversation.endSession();
