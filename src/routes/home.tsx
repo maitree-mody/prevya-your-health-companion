@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PrevyaShell } from "@/components/PrevyaShell";
 import { SectionHeader } from "@/components/SectionHeader";
+import { MonitoringDashboard } from "@/components/MonitoringDashboard";
 import {
   Activity,
   AlertCircle,
@@ -91,6 +92,8 @@ function Home() {
           </div>
         </div>
       </div>
+
+      <MonitoringDashboard />
 
       {/* Urgent + Feed */}
       <div className="mt-6 grid gap-5 lg:grid-cols-5">
