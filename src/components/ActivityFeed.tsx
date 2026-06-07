@@ -21,13 +21,13 @@ type Action = {
 };
 
 const AGENT_META: Record<AgentKey, { emoji: string; label: string; color: string }> = {
-  orchestrator: { emoji: "🧠", label: "Orchestrator", color: "#FFFFFF" },
+  orchestrator: { emoji: "🧠", label: "Orchestrator", color: "#2D2A26" },
   intake: { emoji: "📂", label: "Intake", color: "#C4B5D4" },
-  diagnosis: { emoji: "🔬", label: "Diagnosis", color: "#E8A87C" },
-  monitor: { emoji: "👁️", label: "Monitor", color: "#A8C5A0" },
-  advocate: { emoji: "📣", label: "Advocate", color: "#D4788A" },
-  voice: { emoji: "🗣️", label: "Voice", color: "#A8C5DA" },
-  nutrition: { emoji: "🥗", label: "Nutrition", color: "#98C9A3" },
+  diagnosis: { emoji: "🔬", label: "Diagnosis", color: "#B5673A" },
+  monitor: { emoji: "👁️", label: "Monitor", color: "#6B8A5C" },
+  advocate: { emoji: "📣", label: "Advocate", color: "#B45766" },
+  voice: { emoji: "🗣️", label: "Voice", color: "#6B8AA8" },
+  nutrition: { emoji: "🥗", label: "Nutrition", color: "#5E8A6B" },
 };
 
 function resolveAgent(name: string | null | undefined): AgentKey {
@@ -67,29 +67,29 @@ function StatusBadge({ status }: { status: string | null }) {
   const s = (status ?? "").toLowerCase();
   if (s.includes("retry")) {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-medium text-white/90">
-        <span className="inline-block h-2 w-2 animate-spin rounded-full border border-white/70 border-t-transparent" />
+      <span className="inline-flex items-center gap-1 rounded-full bg-foreground/10 px-2 py-0.5 text-[10px] font-medium text-foreground/80">
+        <span className="inline-block h-2 w-2 animate-spin rounded-full border border-foreground/70 border-t-transparent" />
         retrying
       </span>
     );
   }
   if (s.includes("attention") || s.includes("blocked") || s.includes("warn")) {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-[#E8A87C]/20 px-2 py-0.5 text-[10px] font-medium text-[#E8A87C]">
+      <span className="inline-flex items-center gap-1 rounded-full bg-[#B5673A]/15 px-2 py-0.5 text-[10px] font-medium text-[#8A4A22]">
         ⚠️ needs attention
       </span>
     );
   }
   if (s.includes("complete") || s.includes("done") || s.includes("success")) {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-[#A8C5A0]/20 px-2 py-0.5 text-[10px] font-medium text-[#A8C5A0] animate-fade-in">
+      <span className="inline-flex items-center gap-1 rounded-full bg-[#6B8A5C]/15 px-2 py-0.5 text-[10px] font-medium text-[#4A6741] animate-fade-in">
         ✅ complete
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-medium text-white/80">
-      <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-white/80" />
+    <span className="inline-flex items-center gap-1 rounded-full bg-foreground/10 px-2 py-0.5 text-[10px] font-medium text-foreground/70">
+      <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-foreground/70" />
       ⏳ running
     </span>
   );
@@ -102,7 +102,7 @@ function FeedRow({ action }: { action: Action }) {
 
   return (
     <li
-      className={`flex items-start gap-3 border-b border-white/5 px-5 py-3.5 animate-fade-in ${
+      className={`flex items-start gap-3 border-b border-foreground/10 px-5 py-3.5 animate-fade-in ${
         isRunning ? "[animation:pulse_2s_cubic-bezier(0.4,0,0.6,1)_infinite]" : ""
       }`}
     >
@@ -114,9 +114,9 @@ function FeedRow({ action }: { action: Action }) {
           <span className="text-sm font-semibold" style={{ color: meta.color }}>
             {meta.label}
           </span>
-          <span className="text-[11px] text-white/40">{timeAgo(action.timestamp)}</span>
+          <span className="text-[11px] text-foreground/50">{timeAgo(action.timestamp)}</span>
         </div>
-        <p className="mt-0.5 text-sm leading-snug text-white/85">
+        <p className="mt-0.5 text-sm leading-snug text-foreground/85">
           {action.action_detail ?? action.result ?? action.action_type ?? "—"}
         </p>
       </div>
