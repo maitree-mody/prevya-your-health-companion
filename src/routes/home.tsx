@@ -55,6 +55,10 @@ function Home() {
         }
       />
 
+      <OrchestratorPanel />
+
+
+
       {/* Goal + appointment row */}
       <div className="grid gap-5 lg:grid-cols-3">
         <div className="surface lg:col-span-2 p-6">
