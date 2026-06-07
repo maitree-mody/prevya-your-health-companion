@@ -145,6 +145,17 @@ function CheckinExperience() {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [tokenError, setTokenError] = useState<string | null>(null);
 
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "https://unpkg.com/@elevenlabs/convai-widget-embed";
+    script.async = true;
+    script.type = "text/javascript";
+    document.body.appendChild(script);
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
+
   const conversation = useConversation({
     onMessage: (msg: any) => {
       console.log("[Prevya checkin] ElevenLabs message", msg);
