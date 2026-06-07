@@ -1,10 +1,21 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ConversationProvider, useConversation } from "@elevenlabs/react";
-import { Component, useCallback, useState, type ErrorInfo, type ReactNode } from "react";
+import { Component, useCallback, useEffect, useState, type ErrorInfo, type ReactNode } from "react";
 import { Mic, MicOff, CheckCircle2 } from "lucide-react";
 import { PrevyaShell } from "@/components/PrevyaShell";
 import { SectionHeader } from "@/components/SectionHeader";
 import { supabase } from "@/integrations/supabase/client";
+
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      "elevenlabs-convai": React.DetailedHTMLProps<
+        React.HTMLAttributes<HTMLElement> & { "agent-id": string },
+        HTMLElement
+      >;
+    }
+  }
+}
 
 const PREVYA_AGENT_ID = "agent_5901kth9g167f7grv0ndphzkz8ss";
 
