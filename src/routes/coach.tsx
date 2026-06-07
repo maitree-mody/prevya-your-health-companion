@@ -241,7 +241,6 @@ function CoachPage() {
       await navigator.mediaDevices.getUserMedia({ audio: true });
       await conversation.startSession({
         agentId: PREVYA_AGENT_ID,
-        connectionType: "webrtc",
         overrides: {
           agent: {
             prompt: { prompt: ROLEPLAY_PROMPT },

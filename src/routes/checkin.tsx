@@ -161,7 +161,6 @@ function CheckinExperience() {
       await navigator.mediaDevices.getUserMedia({ audio: true });
       await conversation.startSession({
         agentId: PREVYA_AGENT_ID,
-        connectionType: "webrtc",
       } as any);
       console.log("[Prevya checkin] startSession call completed");
     } catch (e: any) {
