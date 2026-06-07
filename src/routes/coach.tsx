@@ -228,9 +228,8 @@ function CoachPage() {
     setRpStatus("connecting");
     try {
       await navigator.mediaDevices.getUserMedia({ audio: true });
-      const { token } = await fetchToken();
       await conversation.startSession({
-        conversationToken: token,
+        agentId: PREVYA_AGENT_ID,
         connectionType: "webrtc",
         overrides: {
           agent: {
