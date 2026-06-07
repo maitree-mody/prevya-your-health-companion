@@ -44,7 +44,7 @@ function CheckinPage() {
     const widget = document.createElement('elevenlabs-convai');
     widget.setAttribute('agent-id', 'agent_5901kth9g167f7grv0ndphzkz8ss');
     widget.setAttribute('dynamic-variables', JSON.stringify({ customer_name: 'Sarah' }));
-    widget.setAttribute('override-first-message', 'How are you feeling today?');
+    
     document.body.appendChild(widget);
     widgetElRef.current = widget;
 
