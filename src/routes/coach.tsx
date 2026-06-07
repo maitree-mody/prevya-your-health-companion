@@ -162,20 +162,31 @@ const DISMISSALS = [
   },
 ];
 
-const ROLEPLAY_PROMPT = `You are playing a time-pressed, slightly skeptical doctor. The patient has been unwell for years and is trying to get answers.
+const ROLEPLAY_PROMPT = `You are Prevya's appointment coach.
+Help this woman prepare for her medical appointment.
 
-Push back the way a real doctor might:
-- "Your bloods are normal"
-- "This sounds like it could be anxiety"
-- "Let's wait and see"
-- "I'm not sure a referral is warranted"
+Phase 1 — brief her:
+Tell her the 3 most important things to raise.
+Tell her exactly which tests to ask for.
 
-After each exchange, BREAK CHARACTER and give her one specific coaching tip, e.g.:
-"When they say your bloods are normal, try saying: I understand they're within range, but I'd like to understand why they've shifted so significantly."
+Phase 2 — handle dismissal:
+If doctor says 'your bloods are normal' coach her to say:
+'I understand they're within range but I'd like to
+understand why my TSH has shifted 40% across three tests'
 
-Be realistic but not cruel. She is practising to close a 7 year gap. Help her find her voice.`;
+If doctor says 'it's probably stress' coach her to say:
+'I've tracked these symptoms daily for 3 months and
+they follow a consistent pattern — I'd like to rule
+out an autoimmune cause'
 
-const ROLEPLAY_FIRST = "Hello, come on in. So... what brings you in today? I've only got about ten minutes.";
+Phase 3 — roleplay:
+Offer to play a skeptical doctor so she can practise.
+After each exchange give her one specific tip.
+
+Always remind her: she is not a difficult patient,
+she is an informed one.`;
+
+const ROLEPLAY_FIRST = "Let's prepare for your appointment. Which specialist are you seeing?";
 
 function CoachPage() {
   const [specialist, setSpecialist] = useState<Specialist>("Rheumatologist");
