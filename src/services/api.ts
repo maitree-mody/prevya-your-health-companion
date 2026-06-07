@@ -44,21 +44,38 @@ export async function generateDossier() {
   return data
 }
 
+// Base URL for the Next.js API (same origin in prod; localhost:3000 in local dev)
+const NEXT_API = import.meta.env.VITE_NEXT_API_URL ?? 'http://localhost:3000'
+
 export async function runFullDemo() {
   const userId = await getCurrentUserId()
 
+  // Try the server-side endpoint first (proper sequencing, reliable timing)
+  try {
+    const res = await fetch(`${NEXT_API}/api/demo/run`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId }),
+    })
+    if (res.ok) return await res.json()
+  } catch {
+    // Next.js server not reachable — fall back to client-side inserts
+  }
+
+  // Fallback: client-side timed inserts via Supabase directly
   const items = [
-    { agent: 'intake_agent',    msg: '📂 Reading 6 years of medical records...',                    status: 'running',  delay: 0     },
-    { agent: 'intake_agent',    msg: '📂 3 GP letters, 8 blood tests processed ✅',                 status: 'complete', delay: 2000  },
-    { agent: 'diagnosis_agent', msg: '🔬 Analyzing against ACR/EULAR criteria...',                 status: 'running',  delay: 2500  },
-    { agent: 'diagnosis_agent', msg: '🔬 APS probability HIGH — ANA positive + 2 miscarriages ✅', status: 'complete', delay: 5000  },
-    { agent: 'orchestrator',    msg: '🧠 High probability detected — initiating rheumatology booking', status: 'complete', delay: 6000 },
-    { agent: 'advocate_agent',  msg: '📣 Searching for rheumatologists...',                         status: 'running',  delay: 7000  },
-    { agent: 'advocate_agent',  msg: '📣 Dr. Sarah Chen, March 24th — booked ✅',                  status: 'complete', delay: 9000  },
-    { agent: 'advocate_agent',  msg: '📣 Dossier emailed to clinic ✅',                             status: 'complete', delay: 11000 },
-    { agent: 'monitor_agent',   msg: '👁️ Pain elevated 3 days — luteal phase correlation ✅',      status: 'complete', delay: 12000 },
-    { agent: 'nutrition_agent', msg: '🥗 Anti-inflammatory protocol activated ✅',                  status: 'complete', delay: 13000 },
-    { agent: 'voice_agent',     msg: '🗣️ Outbound call initiated...',                              status: 'running',  delay: 14000 },
+    { agent: 'intake_agent',    msg: '📂 Intake: Reading 6 years of medical records...',                         status: 'running',  delay: 0     },
+    { agent: 'intake_agent',    msg: '📂 Intake: 3 GP letters, 8 blood tests, 2 referral letters processed ✅',  status: 'complete', delay: 2000  },
+    { agent: 'diagnosis_agent', msg: '🔬 Diagnosis: Analyzing patterns against ACR/EULAR clinical criteria...', status: 'running',  delay: 4000  },
+    { agent: 'diagnosis_agent', msg: '🔬 Diagnosis: APS probability HIGH — ANA positive + 2 miscarriages + joint pain pattern identified ✅', status: 'complete', delay: 6000 },
+    { agent: 'orchestrator',    msg: '🧠 Orchestrator: High probability APS detected — initiating rheumatology booking sequence', status: 'complete', delay: 8000 },
+    { agent: 'advocate_agent',  msg: '📣 Advocate: Searching for rheumatologists accepting new patients...',    status: 'running',  delay: 10000 },
+    { agent: 'advocate_agent',  msg: '📣 Advocate: Appointment found — Dr. Sarah Chen, March 24th ✅',          status: 'complete', delay: 12000 },
+    { agent: 'advocate_agent',  msg: '📣 Advocate: Booking confirmed ✅',                                        status: 'complete', delay: 14000 },
+    { agent: 'advocate_agent',  msg: '📣 Advocate: Dossier emailed to clinic ✅',                               status: 'complete', delay: 16000 },
+    { agent: 'monitor_agent',   msg: '👁️ Monitor: Pain scores elevated 3 days — correlates with luteal phase ✅', status: 'complete', delay: 18000 },
+    { agent: 'nutrition_agent', msg: '🥗 Nutrition: Flare risk detected — anti-inflammatory protocol activated ✅', status: 'complete', delay: 20000 },
+    { agent: 'voice_agent',     msg: '🗣️ Voice: Initiating outbound call to patient...',                        status: 'running',  delay: 22000 },
   ]
 
   for (const item of items) {
@@ -69,8 +86,8 @@ export async function runFullDemo() {
         action_type: 'demo',
         action_detail: item.msg,
         status: item.status,
-        timestamp: new Date(Date.now() + item.delay).toISOString(),
-        verified_boolean: true,
+        timestamp: new Date().toISOString(),
+        verified_boolean: item.status === 'complete',
       })
     }, item.delay)
   }
