@@ -304,6 +304,12 @@ function CheckinExperience() {
             Prevya is listening · tap to end
           </div>
         )}
+
+        {tokenError && !isActive && (
+          <div className="mt-4 max-w-sm rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-2 text-center text-xs text-destructive animate-fade-in">
+            {tokenError}
+          </div>
+        )}
       </div>
 
       {/* Summary card */}
