@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useConversation } from "@elevenlabs/react";
-import { useServerFn } from "@tanstack/react-start";
 import { useCallback, useEffect, useState } from "react";
 import { ChevronDown, Mic, MicOff, Sparkles, CheckCircle2, Loader2 } from "lucide-react";
 import { PrevyaShell } from "@/components/PrevyaShell";
@@ -16,8 +15,9 @@ import {
 } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
-import { getPrevyaConversationToken } from "@/lib/elevenlabs.functions";
 import { DEMO_USER_ID } from "@/services/api";
+
+const PREVYA_AGENT_ID = "agent_5901kth9g167f7grv0ndphzkz8ss";
 
 export const Route = createFileRoute("/coach")({
   head: () => ({
