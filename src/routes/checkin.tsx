@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useConversation } from "@elevenlabs/react";
-import { useCallback, useState } from "react";
+import { ConversationProvider, useConversation } from "@elevenlabs/react";
+import { Component, useCallback, useState, type ErrorInfo, type ReactNode } from "react";
 import { Mic, MicOff, CheckCircle2 } from "lucide-react";
 import { PrevyaShell } from "@/components/PrevyaShell";
 import { SectionHeader } from "@/components/SectionHeader";
@@ -65,19 +65,86 @@ type Summary = {
   transcript: string;
 };
 
+class CheckinErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+  state = { hasError: false };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error("[Prevya checkin] render crashed", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return <VoiceFallback message="Voice not available — check your connection" />;
+    }
+
+    return this.props.children;
+  }
+}
+
+function VoiceFallback({ message }: { message: string }) {
+  return (
+    <PrevyaShell>
+      <SectionHeader
+        eyebrow="Daily check-in"
+        title="Take a breath. I'm here."
+        description="Voice check-in is temporarily unavailable."
+      />
+      <div className="surface px-6 py-16 text-center">
+        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-secondary/50 text-secondary-foreground">
+          <MicOff className="h-8 w-8" />
+        </div>
+        <p className="mt-6 font-display text-xl font-semibold text-foreground">{message}</p>
+        <p className="mt-2 text-sm text-muted-foreground">Please refresh and try again in a moment.</p>
+      </div>
+    </PrevyaShell>
+  );
+}
+
 function CheckinPage() {
+  console.log("[Prevya checkin] rendering route shell");
+  const voicePackageAvailable = typeof ConversationProvider === "function" && typeof useConversation === "function";
+
+  if (!voicePackageAvailable) {
+    console.error("[Prevya checkin] @elevenlabs/react package is not available");
+    return <VoiceFallback message="Voice not available — check your connection" />;
+  }
+
+  try {
+    console.log("[Prevya checkin] ElevenLabs package available; mounting provider");
+    return (
+      <CheckinErrorBoundary>
+        <ConversationProvider agentId={PREVYA_AGENT_ID}>
+          <CheckinExperience />
+        </ConversationProvider>
+      </CheckinErrorBoundary>
+    );
+  } catch (error) {
+    console.error("[Prevya checkin] failed before render", error);
+    return <VoiceFallback message="Voice not available — check your connection" />;
+  }
+}
+
+function CheckinExperience() {
   const [emotion, setEmotion] = useState<Emotion>("calm");
   const [transcriptLog, setTranscriptLog] = useState<string[]>([]);
   const [summary, setSummary] = useState<Summary | null>(null);
 
   const conversation = useConversation({
     onMessage: (msg: any) => {
+      console.log("[Prevya checkin] ElevenLabs message", msg);
       const text: string | undefined = msg?.message || msg?.text || msg?.user_transcription_event?.user_transcript;
       if (!text) return;
       setTranscriptLog(prev => [...prev, text]);
       setEmotion(detectEmotion(text));
     },
-    onError: (e: any) => console.error("ElevenLabs error", e),
+    onConnect: (event: any) => console.log("[Prevya checkin] ElevenLabs connected", event),
+    onDisconnect: () => console.log("[Prevya checkin] ElevenLabs disconnected"),
+    onError: (e: any) => console.error("[Prevya checkin] ElevenLabs error", e),
+    onStatusChange: (status: any) => console.log("[Prevya checkin] ElevenLabs status", status),
   });
 
   const status = conversation.status;
@@ -85,30 +152,35 @@ function CheckinPage() {
   const isConnecting = status === "connecting";
 
   const start = useCallback(async () => {
+    console.log("[Prevya checkin] mic tapped; starting session");
     setSummary(null);
     setTranscriptLog([]);
     try {
+      console.log("[Prevya checkin] requesting microphone access");
       await navigator.mediaDevices.getUserMedia({ audio: true });
+      console.log("[Prevya checkin] microphone granted; starting ElevenLabs session", PREVYA_AGENT_ID);
       await conversation.startSession({
         agentId: PREVYA_AGENT_ID,
-        connectionType: "webrtc",
         overrides: {
           agent: {
-            firstMessage: "Hi, it's Prevya. How are you feeling today? Take your time.",
+            firstMessage: "Hi, it's Prevya. How are you feeling today?",
             prompt: {
               prompt: "You are Prevya, a warm, calm medical advocate for women with autoimmune and reproductive health conditions. Listen carefully. Ask gentle follow-up questions about symptoms, pain (0-10), cycle, fatigue, and emotion. Validate her experience. Keep responses under 2 sentences. Never give medical advice — you advocate and document.",
             },
           },
         },
       } as any);
+      console.log("[Prevya checkin] startSession call completed");
     } catch (e) {
-      console.error("startSession failed", e);
+      console.error("[Prevya checkin] startSession failed", e);
     }
   }, [conversation]);
 
   const stop = useCallback(async () => {
+    console.log("[Prevya checkin] ending session");
     await conversation.endSession();
     const transcript = transcriptLog.join(" ");
+    console.log("[Prevya checkin] transcript collected", transcript);
     const detected = transcript ? detectEmotion(transcript) : emotion;
     const symptoms = extractSymptoms(transcript);
     const painScore = estimatePain(transcript);
@@ -120,6 +192,7 @@ function CheckinPage() {
     setEmotion(detected);
 
     try {
+      console.log("[Prevya checkin] saving checkin", result);
       await supabase.from("checkins").insert({
         transcript,
         symptoms_extracted: symptoms,
@@ -135,8 +208,9 @@ function CheckinPage() {
         content: `Daily check-in: ${detected}. ${symptoms.length ? "Mentioned: " + symptoms.join(", ") + "." : ""}`,
         clinical_flag: detected === "distress" || painScore > 70,
       });
+      console.log("[Prevya checkin] saved checkin and timeline event");
     } catch (e) {
-      console.error("save failed", e);
+      console.error("[Prevya checkin] save failed", e);
     }
   }, [conversation, transcriptLog, emotion]);
 
