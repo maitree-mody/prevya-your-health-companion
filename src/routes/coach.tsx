@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useConversation } from "@elevenlabs/react";
-import { useServerFn } from "@tanstack/react-start";
 import { useCallback, useEffect, useState } from "react";
 import { ChevronDown, Mic, MicOff, Sparkles, CheckCircle2, Loader2 } from "lucide-react";
 import { PrevyaShell } from "@/components/PrevyaShell";
@@ -16,8 +15,9 @@ import {
 } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
-import { getPrevyaConversationToken } from "@/lib/elevenlabs.functions";
 import { DEMO_USER_ID } from "@/services/api";
+
+const PREVYA_AGENT_ID = "agent_5901kth9g167f7grv0ndphzkz8ss";
 
 export const Route = createFileRoute("/coach")({
   head: () => ({
@@ -184,7 +184,7 @@ function CoachPage() {
   const [rpStatus, setRpStatus] = useState<"idle" | "connecting" | "live" | "ended">("idle");
   const [rpError, setRpError] = useState<string | null>(null);
   const [sessionSummary, setSessionSummary] = useState<string[] | null>(null);
-  const fetchToken = useServerFn(getPrevyaConversationToken);
+  
 
   const conversation = useConversation({
     onConnect: () => setRpStatus("live"),
@@ -228,9 +228,8 @@ function CoachPage() {
     setRpStatus("connecting");
     try {
       await navigator.mediaDevices.getUserMedia({ audio: true });
-      const { token } = await fetchToken();
       await conversation.startSession({
-        conversationToken: token,
+        agentId: PREVYA_AGENT_ID,
         connectionType: "webrtc",
         overrides: {
           agent: {
@@ -252,7 +251,7 @@ function CoachPage() {
       setRpError(err instanceof Error ? err.message : "Could not start roleplay.");
       setRpStatus("idle");
     }
-  }, [conversation, fetchToken, specialist]);
+  }, [conversation, specialist]);
 
   const stopRoleplay = useCallback(async () => {
     await conversation.endSession();
