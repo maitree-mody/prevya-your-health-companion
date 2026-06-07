@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Mic, Activity, Heart, Zap } from "lucide-react";
 import { PrevyaShell } from "@/components/PrevyaShell";
 import { SectionHeader } from "@/components/SectionHeader";
@@ -18,13 +18,23 @@ const BLOB_COLOR = "#D4788A";
 
 function CheckinPage() {
   const [pulse, setPulse] = useState(false);
+  const widgetRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const script = document.createElement('script')
-    script.src = 'https://unpkg.com/@elevenlabs/convai-widget-embed'
-    script.async = true
-    document.body.appendChild(script)
-    return () => document.body.removeChild(script)
+    // Create the custom element imperatively so React never touches it
+    const widget = document.createElement('elevenlabs-convai');
+    widget.setAttribute('agent-id', 'agent_5901kth9g167f7grv0ndphzkz8ss');
+    widgetRef.current?.appendChild(widget);
+
+    const script = document.createElement('script');
+    script.src = 'https://unpkg.com/@elevenlabs/convai-widget-embed';
+    script.async = true;
+    document.body.appendChild(script);
+
+    return () => {
+      if (widgetRef.current) widgetRef.current.innerHTML = '';
+      if (document.body.contains(script)) document.body.removeChild(script);
+    };
   }, [])
 
   // Animate blob gently on load
@@ -82,13 +92,8 @@ function CheckinPage() {
           <div className="mt-1 font-display text-2xl font-semibold tracking-tight">How are you feeling today?</div>
         </div>
 
-        {/* ElevenLabs widget sits here */}
-        <div
-          className="mt-8"
-          dangerouslySetInnerHTML={{
-            __html: '<elevenlabs-convai agent-id="agent_5901kth9g167f7grv0ndphzkz8ss"></elevenlabs-convai>'
-          }}
-        />
+        {/* ElevenLabs widget — mounted imperatively via ref */}
+        <div ref={widgetRef} className="mt-8" />
 
         <p className="mt-4 text-xs text-muted-foreground">
           Tap the mic button above · your voice stays private
