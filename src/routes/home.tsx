@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { PrevyaShell } from "@/components/PrevyaShell";
 import { SectionHeader } from "@/components/SectionHeader";
 import { MonitoringDashboard } from "@/components/MonitoringDashboard";
+import { OrchestratorPanel } from "@/components/OrchestratorPanel";
 import {
   Activity,
   AlertCircle,
