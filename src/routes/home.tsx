@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { useState } from 'react'
 
 export const Route = createFileRoute('/home')({
@@ -73,6 +73,30 @@ function HomePage() {
           }}>
             ↺ Reset
           </button>
+        </div>
+
+        {/* Nav links */}
+        <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '10px', marginBottom: '32px'}}>
+          {[
+            { to: '/checkin',   label: '🎙️ Daily Check-in' },
+            { to: '/dossier',   label: '📋 My Dossier' },
+            { to: '/coach',     label: '💬 Appointment Coach' },
+            { to: '/nutrition', label: '🥗 Nutrition' },
+            { to: '/timeline',  label: '📅 Timeline' },
+            { to: '/journey',   label: '🧭 My Journey' },
+            { to: '/upload',    label: '📤 Upload Records' },
+            { to: '/picture',   label: '🖼️ My Picture' },
+          ].map(({ to, label }) => (
+            <Link key={to} to={to} style={{
+              display: 'block', padding: '12px 16px',
+              background: 'white', border: '1px solid #E5DACE',
+              borderRadius: '10px', textDecoration: 'none',
+              color: '#1B2A4A', fontSize: '13px', fontWeight: '500',
+              transition: 'border-color 0.15s',
+            }}>
+              {label}
+            </Link>
+          ))}
         </div>
 
         <div style={{
