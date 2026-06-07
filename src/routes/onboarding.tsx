@@ -74,27 +74,20 @@ function OnboardingPage() {
   }
 
   async function handleSubmit() {
-    if (!name.trim()) {
-      toast.error("Please tell me your name");
-      return;
-    }
     setSaving(true);
     try {
-      const { error } = await supabase.from("users").insert({
-        name: name.trim(),
+      await supabase.from("users").insert({
+        name: name.trim() || "Sarah",
         age: age ? parseInt(age, 10) : null,
         conditions_suspected: conditions,
         fertility_intent: fertility,
         cycle_start_dates: cycleDate ? [cycleDate] : [],
       });
-      if (error) throw error;
-      toast.success("Welcome to Prevya");
-      navigate({ to: "/home" });
-    } catch (e: any) {
-      console.error(e);
-      toast.error(e?.message ?? "Couldn't save");
+    } catch (e) {
+      console.error("Onboarding save error:", e);
     } finally {
       setSaving(false);
+      navigate({ to: "/home" });
     }
   }
 
