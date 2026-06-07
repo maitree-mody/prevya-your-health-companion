@@ -38,6 +38,12 @@ function OnboardingPage() {
   const [saving, setSaving] = useState(false);
 
   const speakIntro = async () => {
+    const apiKey = import.meta.env.VITE_ELEVENLABS_API_KEY;
+    console.log('key exists:', !!apiKey);
+    if (!apiKey) {
+      console.error('VITE_ELEVENLABS_API_KEY is not set — TTS will not work. Add it to your environment variables.');
+      return;
+    }
     try {
       setIsPlaying(true);
       const response = await fetch(
@@ -45,7 +51,7 @@ function OnboardingPage() {
         {
           method: "POST",
           headers: {
-            "xi-api-key": import.meta.env.VITE_ELEVENLABS_API_KEY,
+            "xi-api-key": apiKey,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({

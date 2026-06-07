@@ -261,6 +261,11 @@ function CheckinExperience() {
           />
         </div>
 
+        {/* ElevenLabs ConvAI widget */}
+        <div dangerouslySetInnerHTML={{
+          __html: `<elevenlabs-convai agent-id="agent_5901kth9g167f7grv0ndphzkz8ss"></elevenlabs-convai>`
+        }} />
+
         {/* Emotion label */}
         <div className="mt-6 text-center transition-opacity duration-500">
           <div className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
