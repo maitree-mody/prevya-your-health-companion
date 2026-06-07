@@ -175,25 +175,25 @@ export function ActivityFeed() {
   });
 
   return (
-    <section className="mt-6 overflow-hidden rounded-2xl shadow-sm" style={{ backgroundColor: "#1B2A4A" }}>
-      <header className="flex items-center justify-between border-b border-white/10 px-6 py-5">
+    <section className="mt-6 overflow-hidden rounded-2xl border border-foreground/10 shadow-sm" style={{ backgroundColor: "#F5EFE4" }}>
+      <header className="flex items-center justify-between border-b border-foreground/10 px-6 py-5">
         <div>
-          <div className="text-[11px] font-medium uppercase tracking-[0.18em] text-white/50">
+          <div className="text-[11px] font-medium uppercase tracking-[0.18em] text-foreground/50">
             Mission Control
           </div>
-          <h2 className="mt-1 font-display text-xl font-semibold text-white">
+          <h2 className="mt-1 font-display text-xl font-semibold text-foreground">
             Prevya's agents working for you
           </h2>
         </div>
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-medium text-white/80">
-          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#A8C5A0]" />
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-foreground/10 px-2.5 py-1 text-[11px] font-medium text-foreground/70">
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#6B8A5C]" />
           live
         </span>
       </header>
 
       <div ref={scrollRef} className="max-h-[480px] overflow-y-auto">
         {ordered.length === 0 ? (
-          <div className="px-6 py-10 text-center text-sm text-white/60">
+          <div className="px-6 py-10 text-center text-sm text-foreground/60">
             Prevya hasn't taken any actions yet.
           </div>
         ) : (
