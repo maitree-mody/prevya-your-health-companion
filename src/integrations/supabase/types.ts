@@ -190,6 +190,36 @@ export type Database = {
           },
         ]
       }
+      diagnosis_results: {
+        Row: {
+          conditions: Json | null
+          created_at: string | null
+          cross_patterns: Json | null
+          doctor_summary: string | null
+          id: string
+          recommended_tests: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          conditions?: Json | null
+          created_at?: string | null
+          cross_patterns?: Json | null
+          doctor_summary?: string | null
+          id?: string
+          recommended_tests?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          conditions?: Json | null
+          created_at?: string | null
+          cross_patterns?: Json | null
+          doctor_summary?: string | null
+          id?: string
+          recommended_tests?: Json | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       documents: {
         Row: {
           extracted_json: Json | null

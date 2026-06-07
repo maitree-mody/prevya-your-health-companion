@@ -1,144 +1,214 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PrevyaShell } from "@/components/PrevyaShell";
 import { SectionHeader } from "@/components/SectionHeader";
-import {
-  CartesianGrid,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
-import { CheckCircle2, Circle, Sparkles } from "lucide-react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Loader2, Sparkles, AlertCircle } from "lucide-react";
 
 export const Route = createFileRoute("/picture")({
   head: () => ({
     meta: [
       { title: "My Picture · Prevya" },
-      { name: "description", content: "Probable diagnoses, recommended tests, and patterns Prevya has detected." },
+      { name: "description", content: "Condition probabilities, recommended tests, and patterns Prevya found across your records." },
     ],
   }),
   component: Picture,
 });
 
-const probs = [
-  { name: "Endometriosis", p: 72, color: "bg-accent" },
-  { name: "Adenomyosis", p: 58, color: "bg-secondary" },
-  { name: "Hashimoto's", p: 41, color: "bg-warning" },
-  { name: "PCOS", p: 28, color: "bg-success" },
-  { name: "Lupus", p: 14, color: "bg-secondary/70" },
-  { name: "MCAS", p: 9, color: "bg-warning/70" },
+type Level = "low" | "moderate" | "high";
+type Condition = { name: string; level: Level; evidence: string[] };
+type Test = { name: string; priority: "urgent" | "soon" | "routine"; rationale: string };
+type Pattern = { title: string; body: string };
+
+type Result = {
+  conditions: Condition[];
+  recommended_tests: Test[];
+  cross_patterns: Pattern[];
+  doctor_summary: string;
+};
+
+const LOADING_STEPS = [
+  "Reading your records…",
+  "Finding patterns…",
+  "Building your picture…",
 ];
 
-const tests = [
-  { t: "Transvaginal ultrasound (specialist)", done: true },
-  { t: "AMH + FSH + LH panel", done: true },
-  { t: "CA-125 marker", done: false },
-  { t: "Pelvic MRI with endo protocol", done: false },
-  { t: "Anti-TPO antibodies", done: false },
-  { t: "Vitamin D, B12, ferritin", done: true },
-];
+const levelStyles: Record<Level, { pill: string; label: string }> = {
+  low: { pill: "bg-success/30 text-foreground border-success/50", label: "Low likelihood" },
+  moderate: { pill: "bg-warning/30 text-foreground border-warning/60", label: "Moderate likelihood" },
+  high: { pill: "bg-accent/30 text-foreground border-accent/60", label: "High likelihood" },
+};
 
-const patterns = [
-  { t: "Pain peaks 2 days before period — every cycle for 3 months.", flag: "Cyclical" },
-  { t: "Fatigue scores rise 36h after high-histamine meals.", flag: "Diet" },
-  { t: "Distress spikes correlate with unanswered doctor messages.", flag: "Care" },
-];
+const priorityDot: Record<Test["priority"], string> = {
+  urgent: "bg-accent",
+  soon: "bg-warning",
+  routine: "bg-success",
+};
 
-const labs = [
-  { m: "Jan", ferritin: 18, tsh: 3.4 },
-  { m: "Feb", ferritin: 20, tsh: 3.1 },
-  { m: "Mar", ferritin: 22, tsh: 2.9 },
-  { m: "Apr", ferritin: 24, tsh: 2.6 },
-  { m: "May", ferritin: 29, tsh: 2.3 },
-  { m: "Jun", ferritin: 34, tsh: 2.1 },
-];
+const priorityLabel: Record<Test["priority"], string> = {
+  urgent: "Urgent",
+  soon: "Soon",
+  routine: "Routine",
+};
 
 function Picture() {
+  const [step, setStep] = useState(0);
+  const [data, setData] = useState<Result | null>(null);
+
+  useEffect(() => {
+    const t1 = setTimeout(() => setStep(1), 1100);
+    const t2 = setTimeout(() => setStep(2), 2200);
+    const t3 = setTimeout(async () => {
+      const { data: rows } = await supabase
+        .from("diagnosis_results")
+        .select("conditions, recommended_tests, cross_patterns, doctor_summary")
+        .order("created_at", { ascending: false })
+        .limit(1);
+      const row = rows?.[0];
+      if (row) {
+        setData({
+          conditions: (row.conditions as unknown as Condition[]) ?? [],
+          recommended_tests: (row.recommended_tests as unknown as Test[]) ?? [],
+          cross_patterns: (row.cross_patterns as unknown as Pattern[]) ?? [],
+          doctor_summary: row.doctor_summary ?? "",
+        });
+      } else {
+        setData({ conditions: [], recommended_tests: [], cross_patterns: [], doctor_summary: "" });
+      }
+    }, 3200);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
+  }, []);
+
   return (
     <PrevyaShell>
       <SectionHeader
         eyebrow="My picture"
         title="What I think is going on."
-        description="Probabilities, recommended next tests, and the patterns that are starting to show."
+        description="A working hypothesis built from everything you've shared — your records, your check-ins, your cycle."
       />
 
-      <div className="grid gap-5 lg:grid-cols-3">
-        <div className="surface lg:col-span-2 p-6">
-          <h2 className="font-display text-lg font-semibold tracking-tight">Diagnosis probability map</h2>
-          <p className="mt-1 text-xs text-muted-foreground">Bayesian estimates updated nightly · not a diagnosis</p>
-          <ul className="mt-5 space-y-4">
-            {probs.map((p) => (
-              <li key={p.name}>
-                <div className="mb-1.5 flex items-baseline justify-between">
-                  <span className="text-sm font-medium">{p.name}</span>
-                  <span className="text-sm tabular-nums text-muted-foreground">{p.p}%</span>
-                </div>
-                <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                  <div className={["h-full rounded-full", p.color].join(" ")} style={{ width: `${p.p}%` }} />
-                </div>
-              </li>
+      {!data ? (
+        <div className="surface flex flex-col items-center justify-center gap-4 p-16 text-center">
+          <Loader2 className="h-7 w-7 animate-spin text-accent" />
+          <div className="space-y-1">
+            <p className="font-display text-lg font-medium tracking-tight">{LOADING_STEPS[step]}</p>
+            <p className="text-xs text-muted-foreground">This usually takes a few seconds.</p>
+          </div>
+          <div className="mt-2 flex gap-1.5">
+            {LOADING_STEPS.map((_, i) => (
+              <span
+                key={i}
+                className={`h-1.5 w-8 rounded-full transition-colors ${
+                  i <= step ? "bg-accent" : "bg-muted"
+                }`}
+              />
             ))}
-          </ul>
-        </div>
-
-        <div className="surface p-6">
-          <h2 className="font-display text-lg font-semibold tracking-tight">Recommended tests</h2>
-          <ul className="mt-4 space-y-2.5">
-            {tests.map((t) => (
-              <li key={t.t} className="flex items-start gap-2.5 text-sm">
-                {t.done ? (
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success-foreground" />
-                ) : (
-                  <Circle className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-                )}
-                <span className={t.done ? "text-muted-foreground line-through" : "text-foreground"}>{t.t}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-
-      <div className="mt-5 grid gap-5 lg:grid-cols-5">
-        <div className="surface lg:col-span-2 p-6">
-          <h2 className="font-display text-lg font-semibold tracking-tight">Patterns detected</h2>
-          <ul className="mt-4 space-y-3">
-            {patterns.map((p) => (
-              <li key={p.t} className="rounded-xl border bg-card p-4">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="h-3.5 w-3.5 text-accent" />
-                  <span className="text-[10px] font-medium uppercase tracking-[0.15em] text-accent">{p.flag}</span>
-                </div>
-                <div className="mt-1.5 text-sm text-foreground/85">{p.t}</div>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div className="surface lg:col-span-3 p-6">
-          <h2 className="font-display text-lg font-semibold tracking-tight">Lab trends</h2>
-          <p className="mt-1 text-xs text-muted-foreground">Ferritin ng/mL · TSH mIU/L</p>
-          <div className="mt-4 h-64">
-            <ResponsiveContainer>
-              <LineChart data={labs} margin={{ left: 0, right: 8, top: 10, bottom: 0 }}>
-                <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
-                <XAxis dataKey="m" stroke="var(--muted-foreground)" fontSize={12} />
-                <YAxis stroke="var(--muted-foreground)" fontSize={12} />
-                <Tooltip
-                  contentStyle={{
-                    background: "var(--card)",
-                    border: "1px solid var(--border)",
-                    borderRadius: 12,
-                    fontSize: 12,
-                  }}
-                />
-                <Line type="monotone" dataKey="ferritin" stroke="var(--accent)" strokeWidth={2.5} dot={{ r: 3 }} />
-                <Line type="monotone" dataKey="tsh" stroke="var(--secondary)" strokeWidth={2.5} dot={{ r: 3 }} />
-              </LineChart>
-            </ResponsiveContainer>
           </div>
         </div>
-      </div>
+      ) : (
+        <div className="space-y-8">
+          {/* Section 1 */}
+          <section>
+            <h2 className="font-display text-lg font-semibold tracking-tight">Condition probability map</h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Bayesian estimates from your records · not a diagnosis
+            </p>
+            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {data.conditions.map((c) => {
+                const s = levelStyles[c.level];
+                return (
+                  <div key={c.name} className="surface p-5">
+                    <div className="flex items-start justify-between gap-3">
+                      <h3 className="font-display text-base font-semibold leading-tight">{c.name}</h3>
+                      <span
+                        className={`shrink-0 rounded-full border px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wider ${s.pill}`}
+                      >
+                        {c.level}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-[11px] text-muted-foreground">{s.label}</p>
+                    <ul className="mt-3 space-y-1.5">
+                      {c.evidence.map((e) => (
+                        <li key={e} className="flex gap-2 text-xs text-foreground/80">
+                          <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-foreground/40" />
+                          <span>{e}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    {(c.level === "moderate" || c.level === "high") && (
+                      <div className="mt-4 flex items-center gap-1.5 border-t pt-3 text-[10px] font-medium uppercase tracking-wider text-accent">
+                        <AlertCircle className="h-3 w-3" />
+                        Warrants investigation
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* Section 2 */}
+          <section className="surface p-6">
+            <h2 className="font-display text-lg font-semibold tracking-tight">Recommended tests</h2>
+            <p className="mt-1 text-xs text-muted-foreground">Prioritised by clinical urgency</p>
+            <ul className="mt-5 divide-y">
+              {data.recommended_tests.map((t) => (
+                <li key={t.name} className="flex items-start gap-3 py-3.5">
+                  <span className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${priorityDot[t.priority]}`} />
+                  <div className="flex-1">
+                    <div className="flex items-baseline justify-between gap-3">
+                      <span className="text-sm font-medium">{t.name}</span>
+                      <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                        {priorityLabel[t.priority]}
+                      </span>
+                    </div>
+                    <p className="mt-0.5 text-xs text-muted-foreground">{t.rationale}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          {/* Section 3 */}
+          <section
+            className="rounded-2xl border p-6"
+            style={{ background: "color-mix(in oklab, var(--secondary) 30%, var(--background))" }}
+          >
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-secondary-foreground" />
+              <h2 className="font-display text-lg font-semibold tracking-tight">
+                What Prevya found across your records
+              </h2>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Cross-specialty patterns no single doctor was positioned to see.
+            </p>
+            <div className="mt-5 grid gap-4 md:grid-cols-3">
+              {data.cross_patterns.map((p) => (
+                <div key={p.title} className="rounded-xl bg-card/80 p-4 backdrop-blur">
+                  <h3 className="text-sm font-semibold leading-tight">{p.title}</h3>
+                  <p className="mt-1.5 text-xs leading-relaxed text-foreground/75">{p.body}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Section 4 */}
+          <section className="rounded-2xl bg-primary p-7 text-primary-foreground">
+            <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-primary-foreground/70">
+              What to tell your doctor
+            </p>
+            <p className="mt-3 font-display text-lg leading-relaxed">{data.doctor_summary}</p>
+            <p className="mt-4 text-[11px] text-primary-foreground/60">
+              Read this aloud. It's everything they need in three sentences.
+            </p>
+          </section>
+        </div>
+      )}
     </PrevyaShell>
   );
 }
