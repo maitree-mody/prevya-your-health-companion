@@ -269,6 +269,124 @@ function UploadScreen() {
           </button>
         </div>
 
+        {/* Wearables sync */}
+        <div style={{
+          marginTop: '24px',
+          padding: '20px',
+          background: '#F5F0FF',
+          borderRadius: '12px',
+          border: '1px solid #E0D5F5'
+        }}>
+          <div style={{
+            fontSize: '11px',
+            textTransform: 'uppercase',
+            letterSpacing: '0.15em',
+            color: '#888',
+            marginBottom: '8px'
+          }}>
+            Wearable Data
+          </div>
+          <h3 style={{
+            fontSize: '16px',
+            fontWeight: '600',
+            color: '#1B2A4A',
+            marginBottom: '4px'
+          }}>
+            Sync your wearables
+          </h3>
+          <p style={{
+            fontSize: '13px',
+            color: '#666',
+            marginBottom: '16px'
+          }}>
+            Prevya correlates your HRV, sleep, and
+            heart rate with your symptoms to predict
+            flares before you feel them.
+          </p>
+
+          <div style={{display: 'flex', gap: '12px', flexWrap: 'wrap'}}>
+            <button style={{
+              display: 'flex', alignItems: 'center', gap: '8px',
+              padding: '10px 16px',
+              background: 'white',
+              border: '1px solid #ddd',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: '500'
+            }}>
+              🍎 Apple Health
+            </button>
+            <button style={{
+              display: 'flex', alignItems: 'center', gap: '8px',
+              padding: '10px 16px',
+              background: 'white',
+              border: '1px solid #ddd',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: '500'
+            }}>
+              🟢 Whoop
+            </button>
+            <button style={{
+              display: 'flex', alignItems: 'center', gap: '8px',
+              padding: '10px 16px',
+              background: 'white',
+              border: '1px solid #ddd',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: '500'
+            }}>
+              ⚫ Oura Ring
+            </button>
+            <button style={{
+              display: 'flex', alignItems: 'center', gap: '8px',
+              padding: '10px 16px',
+              background: 'white',
+              border: '1px solid #ddd',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: '500'
+            }}>
+              🔵 Fitbit
+            </button>
+          </div>
+
+          <div style={{
+            marginTop: '16px',
+            padding: '12px',
+            background: '#FFF8F0',
+            borderRadius: '8px',
+            border: '1px solid #F0E0C8'
+          }}>
+            <div style={{fontSize: '12px', color: '#666'}}>
+              🍎 <strong>Apple Watch connected</strong> · Last synced today
+            </div>
+            <div style={{
+              marginTop: '8px',
+              display: 'flex',
+              gap: '16px',
+              fontSize: '12px'
+            }}>
+              <span style={{color: '#E8A87C'}}>⚠️ HRV 42 (low)</span>
+              <span style={{color: '#D4788A'}}>⚠️ Sleep 5.2hrs</span>
+              <span style={{color: '#E8A87C'}}>⚠️ RHR 78bpm</span>
+            </div>
+            <div style={{
+              marginTop: '8px',
+              fontSize: '12px',
+              color: '#888',
+              fontStyle: 'italic'
+            }}>
+              Low HRV + poor sleep detected —
+              Prevya is watching for a flare pattern
+            </div>
+          </div>
+        </div>
+
         {/* In-flight uploads */}
         {inFlight.length > 0 && (
           <div className="mt-8 space-y-3">
