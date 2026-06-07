@@ -1,10 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ConversationProvider, useConversation } from "@elevenlabs/react";
+import { useServerFn } from "@tanstack/react-start";
 import { Component, useCallback, useState, type ErrorInfo, type ReactNode } from "react";
 import { Mic, MicOff, CheckCircle2 } from "lucide-react";
 import { PrevyaShell } from "@/components/PrevyaShell";
 import { SectionHeader } from "@/components/SectionHeader";
 import { supabase } from "@/integrations/supabase/client";
+import { getPrevyaConversationToken } from "@/lib/elevenlabs.functions";
 
 const PREVYA_AGENT_ID = "agent_5901kth9g167f7grv0ndphzkz8ss";
 
@@ -132,6 +134,8 @@ function CheckinExperience() {
   const [emotion, setEmotion] = useState<Emotion>("calm");
   const [transcriptLog, setTranscriptLog] = useState<string[]>([]);
   const [summary, setSummary] = useState<Summary | null>(null);
+  const [tokenError, setTokenError] = useState<string | null>(null);
+  const fetchToken = useServerFn(getPrevyaConversationToken);
 
   const conversation = useConversation({
     onMessage: (msg: any) => {
@@ -155,12 +159,18 @@ function CheckinExperience() {
     console.log("[Prevya checkin] mic tapped; starting session");
     setSummary(null);
     setTranscriptLog([]);
+    setTokenError(null);
     try {
       console.log("[Prevya checkin] requesting microphone access");
       await navigator.mediaDevices.getUserMedia({ audio: true });
-      console.log("[Prevya checkin] microphone granted; starting ElevenLabs session", PREVYA_AGENT_ID);
+
+      console.log("[Prevya checkin] requesting ElevenLabs conversation token from server");
+      const { token } = await fetchToken();
+      console.log("[Prevya checkin] received token; starting WebRTC session");
+
       await conversation.startSession({
-        agentId: PREVYA_AGENT_ID,
+        conversationToken: token,
+        connectionType: "webrtc",
         overrides: {
           agent: {
             firstMessage: "Hi, it's Prevya. How are you feeling today?",
@@ -171,10 +181,11 @@ function CheckinExperience() {
         },
       } as any);
       console.log("[Prevya checkin] startSession call completed");
-    } catch (e) {
+    } catch (e: any) {
       console.error("[Prevya checkin] startSession failed", e);
+      setTokenError(e?.message ?? "Could not start the voice session.");
     }
-  }, [conversation]);
+  }, [conversation, fetchToken]);
 
   const stop = useCallback(async () => {
     console.log("[Prevya checkin] ending session");
