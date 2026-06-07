@@ -1,253 +1,341 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import {
-  ArrowRight,
+  Activity,
   Heart,
-  Loader2,
-  Mail,
+  Leaf,
+  Lock,
   Mic,
-  Play,
   Sparkles,
-  Upload,
+  Watch,
 } from "lucide-react";
-import { PrevyaShell } from "@/components/PrevyaShell";
-import { supabase } from "@/integrations/supabase/client";
-import { DEMO_USER_ID } from "@/services/api";
+import botanical from "@/assets/landing-botanical.jpg";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Welcome to Prevya" },
+      { title: "Prevya — Women's health, finally listened to" },
       {
         name: "description",
         content:
-          "Tell Prevya about yourself so she can begin advocating for you from day one.",
+          "Prevya is your companion for endo, PCOS, ovarian cysts and pelvic pain. Aria, your voice concierge, coaches you through every doctor's visit.",
+      },
+      { property: "og:title", content: "Prevya — Women's health, finally listened to" },
+      {
+        property: "og:description",
+        content:
+          "A voice concierge and symptom companion for endo, PCOS, ovarian cysts and pelvic pain.",
       },
     ],
   }),
-  component: Onboarding,
+  component: Landing,
 });
 
-const CONDITIONS = [
-  "Endometriosis",
-  "PCOS",
-  "Hashimoto's",
-  "Lupus",
-  "Rheumatoid arthritis",
-  "Sjögren's",
-  "Adenomyosis",
-  "MCAS",
-];
+const serif = { fontFamily: '"Playfair Display", "Cormorant Garamond", Georgia, serif' };
 
-function Onboarding() {
-  const navigate = useNavigate();
-  const [name, setName] = useState("");
-  const [age, setAge] = useState("");
-  const [conditions, setConditions] = useState<string[]>([]);
-  const [fertility, setFertility] = useState(false);
-  const [cycleStart, setCycleStart] = useState("");
-  const [playingIntro, setPlayingIntro] = useState(false);
-  const [saving, setSaving] = useState(false);
+const PALETTE = {
+  bg: "#FAF8F5",
+  ink: "#2A1F1A",
+  inkSoft: "#5C4A3F",
+  terracotta: "#C4614A",
+  terracottaDark: "#A84E39",
+  rose: "#E8C5BD",
+  cream: "#F3EBE3",
+  sage: "#A8B89A",
+};
 
-  const toggle = (c: string) =>
-    setConditions((prev) =>
-      prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c],
-    );
-
-  const playIntro = () => {
-    setPlayingIntro(true);
-    const utter = new SpeechSynthesisUtterance(
-      "Hi, I'm Prevya. I'm going to read everything you've ever been given by a doctor, listen to you every day, and work to get you the answers you deserve. Let's start.",
-    );
-    utter.rate = 0.95;
-    utter.pitch = 1.0;
-    utter.onend = () => setPlayingIntro(false);
-    window.speechSynthesis.speak(utter);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
-    try {
-      await supabase.from("users").upsert({
-        id: DEMO_USER_ID,
-        name: name.trim() || "Sarah",
-        age: parseInt(age) || 34,
-        conditions_suspected: conditions.length > 0 ? conditions : ["Lupus", "APS"],
-        fertility_intent: fertility,
-        cycle_start_dates: cycleStart ? [cycleStart] : null,
-        current_goal: "Get a real diagnosis for the pelvic pain — and a plan.",
-        goal_set_date: new Date().toISOString(),
-      });
-    } catch (err) {
-      console.error("Failed to save user:", err);
-    } finally {
-      setSaving(false);
-      navigate({ to: "/home" });
-    }
-  };
-
+function Pill({ children }: { children: React.ReactNode }) {
   return (
-    <PrevyaShell>
-      <div className="mx-auto max-w-2xl">
-        <div className="mb-2 text-[11px] font-medium uppercase tracking-[0.18em] text-accent">
-          A new kind of advocate
-        </div>
-        <h1 className="font-display text-4xl font-semibold tracking-tight md:text-5xl">
-          Hi. I'm <span className="text-accent">Prevya</span>.
-        </h1>
-        <p className="mt-3 max-w-lg text-base leading-relaxed text-muted-foreground">
-          Tell me a little about you. The more I know, the harder I can fight for the answers
-          you deserve.
-        </p>
-
-        {/* Voice intro */}
-        <button
-          onClick={playIntro}
-          className="mt-6 group inline-flex items-center gap-3 rounded-full border bg-card px-5 py-3 text-sm font-medium shadow-sm transition hover:border-accent hover:shadow-md"
-        >
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-accent text-accent-foreground">
-            {playingIntro ? <Mic className="h-4 w-4 animate-pulse" /> : <Play className="h-4 w-4" />}
-          </span>
-          <span className="text-foreground">
-            {playingIntro ? "Listening to Prevya…" : "Hear Prevya introduce herself"}
-          </span>
-        </button>
-
-        <form className="mt-10 space-y-7" onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-            <Field label="Your name">
-              <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Maya"
-                className="input"
-              />
-            </Field>
-            <Field label="Age">
-              <input
-                value={age}
-                onChange={(e) => setAge(e.target.value)}
-                inputMode="numeric"
-                placeholder="29"
-                className="input"
-              />
-            </Field>
-          </div>
-
-          <Field label="Conditions you suspect">
-            <div className="flex flex-wrap gap-2">
-              {CONDITIONS.map((c) => {
-                const active = conditions.includes(c);
-                return (
-                  <button
-                    key={c}
-                    type="button"
-                    onClick={() => toggle(c)}
-                    className={[
-                      "rounded-full border px-3.5 py-1.5 text-sm transition",
-                      active
-                        ? "border-accent bg-accent text-accent-foreground"
-                        : "border-border bg-card text-foreground/80 hover:border-accent/50",
-                    ].join(" ")}
-                  >
-                    {c}
-                  </button>
-                );
-              })}
-            </div>
-          </Field>
-
-          <div className="surface flex items-center justify-between p-4">
-            <div className="flex items-start gap-3">
-              <Heart className="mt-0.5 h-5 w-5 text-accent" />
-              <div>
-                <div className="text-sm font-medium">Fertility is part of your goal</div>
-                <div className="text-xs text-muted-foreground">
-                  I'll prioritise reproductive-health pathways.
-                </div>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => setFertility((v) => !v)}
-              className={[
-                "relative h-6 w-11 rounded-full transition",
-                fertility ? "bg-accent" : "bg-muted",
-              ].join(" ")}
-            >
-              <span
-                className={[
-                  "absolute top-0.5 h-5 w-5 rounded-full bg-background shadow transition",
-                  fertility ? "left-5" : "left-0.5",
-                ].join(" ")}
-              />
-            </button>
-          </div>
-
-          <Field label="When did your last cycle start?">
-            <input
-              type="date"
-              value={cycleStart}
-              onChange={(e) => setCycleStart(e.target.value)}
-              className="input"
-            />
-          </Field>
-
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <button
-              type="button"
-              className="flex items-center justify-center gap-2 rounded-xl border bg-card px-4 py-3 text-sm font-medium transition hover:border-accent"
-            >
-              <Mail className="h-4 w-4" /> Connect Gmail
-            </button>
-            <button
-              type="button"
-              className="flex items-center justify-center gap-2 rounded-xl border bg-card px-4 py-3 text-sm font-medium transition hover:border-accent"
-            >
-              <Upload className="h-4 w-4" /> Upload medical records
-            </button>
-          </div>
-
-          <button
-            type="submit"
-            disabled={saving}
-            className="group mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-4 text-base font-medium text-primary-foreground shadow-sm transition hover:opacity-95 disabled:opacity-70"
-          >
-            {saving ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Sparkles className="h-4 w-4" />
-            )}
-            {saving ? "Saving…" : "Start with Prevya"}
-            {!saving && <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />}
-          </button>
-        </form>
-      </div>
-
-      <style>{`
-        .input {
-          width: 100%;
-          border-radius: 0.75rem;
-          border: 1px solid var(--border);
-          background: var(--card);
-          padding: 0.75rem 1rem;
-          font-size: 0.95rem;
-          color: var(--foreground);
-          outline: none;
-          transition: border-color .15s, box-shadow .15s;
-        }
-        .input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px color-mix(in oklab, var(--accent) 18%, transparent); }
-      `}</style>
-    </PrevyaShell>
+    <span
+      className="inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-xs font-medium"
+      style={{ borderColor: "#E5DACE", background: "#FFFFFFAA", color: PALETTE.inkSoft }}
+    >
+      <span
+        className="inline-block h-2 w-2 rounded-full"
+        style={{ background: PALETTE.terracotta }}
+      />
+      {children}
+    </span>
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function PrimaryBtn({
+  to,
+  children,
+  wide,
+}: {
+  to: string;
+  children: React.ReactNode;
+  wide?: boolean;
+}) {
   return (
-    <label className="block">
-      <div className="mb-2 text-sm font-medium text-foreground/80">{label}</div>
+    <Link
+      to={to}
+      className={[
+        "inline-flex items-center justify-center rounded-full font-medium transition-all hover:opacity-95 hover:shadow-md",
+        wide ? "px-9 py-4 text-base" : "px-6 py-3 text-sm",
+      ].join(" ")}
+      style={{
+        background: PALETTE.terracotta,
+        color: "#FFF8F3",
+        boxShadow: "0 6px 18px -8px rgba(196,97,74,0.6)",
+      }}
+    >
       {children}
-    </label>
+    </Link>
+  );
+}
+
+function OutlineBtn({ to, children }: { to: string; children: React.ReactNode }) {
+  return (
+    <Link
+      to={to}
+      className="inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-medium transition-all hover:bg-white"
+      style={{ border: `1.5px solid ${PALETTE.terracotta}`, color: PALETTE.terracotta }}
+    >
+      {children}
+    </Link>
+  );
+}
+
+function FeatureCard({
+  Icon,
+  title,
+  text,
+}: {
+  Icon: typeof Mic;
+  title: string;
+  text: string;
+}) {
+  return (
+    <div
+      className="flex flex-col gap-4 rounded-2xl p-7 transition-all hover:-translate-y-1 hover:shadow-lg"
+      style={{ background: "#FFFFFF", border: "1px solid #EDE3D7" }}
+    >
+      <div
+        className="flex h-12 w-12 items-center justify-center rounded-full"
+        style={{ background: `${PALETTE.terracotta}1A`, color: PALETTE.terracotta }}
+      >
+        <Icon className="h-5 w-5" />
+      </div>
+      <h3 className="text-lg font-semibold leading-snug" style={{ ...serif, color: PALETTE.ink }}>
+        {title}
+      </h3>
+      <p className="text-sm leading-relaxed" style={{ color: PALETTE.inkSoft }}>
+        {text}
+      </p>
+    </div>
+  );
+}
+
+function Landing() {
+  return (
+    <div style={{ background: PALETTE.bg, color: PALETTE.ink }} className="min-h-screen">
+      {/* NAVBAR */}
+      <header className="mx-auto flex max-w-[1200px] items-center justify-between px-6 py-6">
+        <Link to="/" className="flex items-center gap-2">
+          <div
+            className="flex h-8 w-8 items-center justify-center rounded-full"
+            style={{ background: `${PALETTE.terracotta}1A` }}
+          >
+            <Leaf className="h-4 w-4" style={{ color: PALETTE.terracotta }} />
+          </div>
+          <span className="text-xl tracking-tight" style={{ ...serif, color: PALETTE.ink }}>
+            Prevya
+          </span>
+        </Link>
+        <nav className="flex items-center gap-5">
+          <Link
+            to="/auth"
+            className="text-sm font-medium transition-opacity hover:opacity-70"
+            style={{ color: PALETTE.ink }}
+          >
+            Sign in
+          </Link>
+          <PrimaryBtn to="/checkin">Get started</PrimaryBtn>
+        </nav>
+      </header>
+
+      {/* HERO */}
+      <section className="mx-auto grid max-w-[1200px] gap-12 px-6 pb-20 pt-10 lg:grid-cols-2 lg:gap-16 lg:pt-16">
+        <div className="flex flex-col justify-center">
+          <Pill>Women's health, finally listened to</Pill>
+          <h1
+            className="mt-7 text-[clamp(2.4rem,5vw,3.75rem)] font-medium leading-[1.05] tracking-tight"
+            style={{ ...serif, color: PALETTE.ink }}
+          >
+            Your body doesn't
+            <br />
+            work in silos,
+            <br />
+            <em style={{ color: PALETTE.terracotta, fontStyle: "italic" }}>
+              your care should not either.
+            </em>
+          </h1>
+          <p
+            className="mt-6 max-w-xl text-base leading-relaxed lg:text-lg"
+            style={{ color: PALETTE.inkSoft }}
+          >
+            Prevya is your companion for endo, ovarian cysts, PCOS, and pelvic pain — with{" "}
+            <span style={{ color: PALETTE.ink, fontWeight: 500 }}>Aria</span>, a voice concierge
+            that coaches you through every doctor's visit so you walk out with answers, not shrugs.
+          </p>
+          <div className="mt-8 flex flex-wrap items-center gap-3">
+            <PrimaryBtn to="/checkin">Talk to Aria</PrimaryBtn>
+            <OutlineBtn to="/upload">Track your symptoms</OutlineBtn>
+          </div>
+          <div
+            className="mt-6 flex items-center gap-2 text-xs"
+            style={{ color: PALETTE.inkSoft }}
+          >
+            <Lock className="h-3.5 w-3.5" />
+            Your data stays yours. Encrypted and private.
+          </div>
+        </div>
+
+        {/* Right image with floating chat */}
+        <div className="relative">
+          <div
+            className="relative overflow-hidden rounded-[2rem]"
+            style={{ background: PALETTE.cream, boxShadow: "0 30px 80px -40px rgba(42,31,26,0.3)" }}
+          >
+            <img
+              src={botanical}
+              alt="Soft botanical illustration in terracotta, sage and cream"
+              width={1024}
+              height={1024}
+              className="h-full w-full object-cover"
+            />
+          </div>
+          {/* floating chat bubble */}
+          <div
+            className="absolute -bottom-6 -left-4 max-w-[320px] rounded-2xl p-5 lg:-left-10"
+            style={{
+              background: "#FFFFFF",
+              border: "1px solid #EDE3D7",
+              boxShadow: "0 20px 50px -20px rgba(42,31,26,0.25)",
+            }}
+          >
+            <div className="flex items-center gap-2">
+              <span
+                className="inline-block h-2 w-2 animate-pulse rounded-full"
+                style={{ background: PALETTE.terracotta }}
+              />
+              <span
+                className="text-[11px] font-medium uppercase tracking-[0.14em]"
+                style={{ color: PALETTE.terracotta }}
+              >
+                Aria · listening
+              </span>
+            </div>
+            <p className="mt-3 text-sm italic leading-relaxed" style={{ color: PALETTE.ink }}>
+              "My doctor said it's just stress. I've had pelvic pain for 3 years."
+            </p>
+            <div
+              className="mt-3 rounded-xl p-3 text-xs leading-relaxed"
+              style={{ background: PALETTE.cream, color: PALETTE.inkSoft }}
+            >
+              <span style={{ color: PALETTE.terracotta, fontWeight: 600 }}>→</span> Aria drafts{" "}
+              <strong style={{ color: PALETTE.ink }}>8 questions</strong> including{" "}
+              <em>"What's your differential? Why aren't we imaging?"</em>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FEATURES */}
+      <section className="mx-auto max-w-[1200px] px-6 py-20">
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+          <FeatureCard
+            Icon={Mic}
+            title="Aria voice concierge"
+            text="Speak naturally. Aria listens, validates, and gives you scripts for when you feel dismissed."
+          />
+          <FeatureCard
+            Icon={Activity}
+            title="Symptom tracker"
+            text="Log pain, mood, cycle in seconds. See patterns across months — not just one visit."
+          />
+          <FeatureCard
+            Icon={Heart}
+            title="Doctor visit prep"
+            text="Aria turns your symptoms into hard-to-dismiss questions tailored to the specialist you're seeing."
+          />
+          <FeatureCard
+            Icon={Leaf}
+            title="Nutrition for your condition"
+            text="Endo-friendly, PCOS-aware, UTI-preventive plans. Evidence-informed, no fad diets."
+          />
+        </div>
+      </section>
+
+      {/* APPLE WATCH BANNER */}
+      <section className="mx-auto max-w-[1200px] px-6 py-12">
+        <div
+          className="overflow-hidden rounded-[2rem] p-10 lg:p-14"
+          style={{
+            background: `linear-gradient(120deg, ${PALETTE.cream} 0%, ${PALETTE.rose} 100%)`,
+          }}
+        >
+          <div className="max-w-3xl">
+            <div
+              className="flex h-12 w-12 items-center justify-center rounded-full"
+              style={{ background: "#FFFFFFCC", color: PALETTE.terracotta }}
+            >
+              <Watch className="h-5 w-5" />
+            </div>
+            <h2
+              className="mt-6 text-[clamp(1.9rem,4vw,2.75rem)] font-medium leading-[1.1] tracking-tight"
+              style={{ ...serif, color: PALETTE.ink }}
+            >
+              Your Apple Watch already knows.
+              <br />
+              <em style={{ color: PALETTE.terracotta, fontStyle: "italic" }}>
+                Aria connects the dots.
+              </em>
+            </h2>
+            <p
+              className="mt-5 max-w-2xl text-base leading-relaxed lg:text-lg"
+              style={{ color: PALETTE.inkSoft }}
+            >
+              HRV dips, resting heart rate spikes, fragmented sleep — Aria correlates wearable
+              signals with your cycle and symptoms so flares stop feeling random.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* QUOTE */}
+      <section className="mx-auto max-w-[900px] px-6 py-24 text-center">
+        <Sparkles
+          className="mx-auto h-6 w-6"
+          style={{ color: PALETTE.terracotta }}
+          strokeWidth={1.5}
+        />
+        <blockquote
+          className="mt-6 text-[clamp(1.6rem,3.2vw,2.4rem)] font-normal leading-[1.25] tracking-tight"
+          style={{ ...serif, color: PALETTE.ink }}
+        >
+          Endometriosis takes{" "}
+          <span style={{ color: PALETTE.terracotta }}>[7–10 years]</span> to diagnose. Ovarian cysts
+          get missed. Pelvic pain gets called back pain. And{" "}
+          <span style={{ color: PALETTE.terracotta }}>20% of women</span> with endometriosis also
+          have autoimmune disorders — making the right diagnosis even more urgent. Prevya exists so
+          the next woman doesn't wait a decade for an answer.
+        </blockquote>
+        <div className="mt-12">
+          <PrimaryBtn to="/checkin" wide>
+            Start your first conversation
+          </PrimaryBtn>
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer
+        className="border-t py-8 text-center text-xs"
+        style={{ borderColor: "#EDE3D7", color: PALETTE.inkSoft }}
+      >
+        © 2026 Prevya · Private medical care
+      </footer>
+    </div>
   );
 }
