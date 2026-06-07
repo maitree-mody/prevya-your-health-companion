@@ -133,7 +133,6 @@ function CheckinExperience() {
   const [transcriptLog, setTranscriptLog] = useState<string[]>([]);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [tokenError, setTokenError] = useState<string | null>(null);
-  const fetchToken = useServerFn(getPrevyaConversationToken);
 
   const conversation = useConversation({
     onMessage: (msg: any) => {
@@ -159,31 +158,18 @@ function CheckinExperience() {
     setTranscriptLog([]);
     setTokenError(null);
     try {
-      console.log("[Prevya checkin] requesting microphone access");
       await navigator.mediaDevices.getUserMedia({ audio: true });
-
-      console.log("[Prevya checkin] requesting ElevenLabs conversation token from server");
-      const { token } = await fetchToken();
-      console.log("[Prevya checkin] received token; starting WebRTC session");
-
       await conversation.startSession({
-        conversationToken: token,
+        agentId: PREVYA_AGENT_ID,
         connectionType: "webrtc",
-        overrides: {
-          agent: {
-            firstMessage: "Hi, it's Prevya. How are you feeling today?",
-            prompt: {
-              prompt: "You are Prevya, a warm, calm medical advocate for women with autoimmune and reproductive health conditions. Listen carefully. Ask gentle follow-up questions about symptoms, pain (0-10), cycle, fatigue, and emotion. Validate her experience. Keep responses under 2 sentences. Never give medical advice — you advocate and document.",
-            },
-          },
-        },
       } as any);
       console.log("[Prevya checkin] startSession call completed");
     } catch (e: any) {
       console.error("[Prevya checkin] startSession failed", e);
       setTokenError(e?.message ?? "Could not start the voice session.");
     }
-  }, [conversation, fetchToken]);
+  }, [conversation]);
+
 
   const stop = useCallback(async () => {
     console.log("[Prevya checkin] ending session");
