@@ -43,6 +43,7 @@ function CheckinPage() {
     // We'll trigger it from our own blob, so visually we keep it but pinned subtly.
     const widget = document.createElement('elevenlabs-convai');
     widget.setAttribute('agent-id', 'agent_5901kth9g167f7grv0ndphzkz8ss');
+    widget.setAttribute('dynamic-variables', JSON.stringify({ customer_name: 'Sarah' }));
     document.body.appendChild(widget);
     widgetElRef.current = widget;
 
