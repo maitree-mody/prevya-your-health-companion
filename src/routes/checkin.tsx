@@ -152,30 +152,35 @@ function CheckinExperience() {
   const isConnecting = status === "connecting";
 
   const start = useCallback(async () => {
+    console.log("[Prevya checkin] mic tapped; starting session");
     setSummary(null);
     setTranscriptLog([]);
     try {
+      console.log("[Prevya checkin] requesting microphone access");
       await navigator.mediaDevices.getUserMedia({ audio: true });
+      console.log("[Prevya checkin] microphone granted; starting ElevenLabs session", PREVYA_AGENT_ID);
       await conversation.startSession({
         agentId: PREVYA_AGENT_ID,
-        connectionType: "webrtc",
         overrides: {
           agent: {
-            firstMessage: "Hi, it's Prevya. How are you feeling today? Take your time.",
+            firstMessage: "Hi, it's Prevya. How are you feeling today?",
             prompt: {
               prompt: "You are Prevya, a warm, calm medical advocate for women with autoimmune and reproductive health conditions. Listen carefully. Ask gentle follow-up questions about symptoms, pain (0-10), cycle, fatigue, and emotion. Validate her experience. Keep responses under 2 sentences. Never give medical advice — you advocate and document.",
             },
           },
         },
       } as any);
+      console.log("[Prevya checkin] startSession call completed");
     } catch (e) {
-      console.error("startSession failed", e);
+      console.error("[Prevya checkin] startSession failed", e);
     }
   }, [conversation]);
 
   const stop = useCallback(async () => {
+    console.log("[Prevya checkin] ending session");
     await conversation.endSession();
     const transcript = transcriptLog.join(" ");
+    console.log("[Prevya checkin] transcript collected", transcript);
     const detected = transcript ? detectEmotion(transcript) : emotion;
     const symptoms = extractSymptoms(transcript);
     const painScore = estimatePain(transcript);
@@ -187,6 +192,7 @@ function CheckinExperience() {
     setEmotion(detected);
 
     try {
+      console.log("[Prevya checkin] saving checkin", result);
       await supabase.from("checkins").insert({
         transcript,
         symptoms_extracted: symptoms,
@@ -202,8 +208,9 @@ function CheckinExperience() {
         content: `Daily check-in: ${detected}. ${symptoms.length ? "Mentioned: " + symptoms.join(", ") + "." : ""}`,
         clinical_flag: detected === "distress" || painScore > 70,
       });
+      console.log("[Prevya checkin] saved checkin and timeline event");
     } catch (e) {
-      console.error("save failed", e);
+      console.error("[Prevya checkin] save failed", e);
     }
   }, [conversation, transcriptLog, emotion]);
 
