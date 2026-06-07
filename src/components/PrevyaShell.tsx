@@ -7,6 +7,7 @@ import {
   FileText,
   Salad,
   Sparkles,
+  UploadCloud,
   UserRound,
 } from "lucide-react";
 import type { ReactNode } from "react";
@@ -14,6 +15,7 @@ import type { ReactNode } from "react";
 const nav = [
   { to: "/", label: "Onboarding", icon: Sparkles },
   { to: "/home", label: "Mission Control", icon: Activity },
+  { to: "/upload", label: "Upload Records", icon: UploadCloud },
   { to: "/picture", label: "My Picture", icon: ClipboardList },
   { to: "/timeline", label: "Timeline", icon: CalendarHeart },
   { to: "/dossier", label: "My Dossier", icon: FileText },

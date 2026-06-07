@@ -1,0 +1,2 @@
+CREATE POLICY "open_read_medical" ON storage.objects FOR SELECT USING (bucket_id = 'medical-records');
+CREATE POLICY "open_insert_medical" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'medical-records');
