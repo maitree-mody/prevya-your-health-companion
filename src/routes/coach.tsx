@@ -184,7 +184,7 @@ function CoachPage() {
   const [rpStatus, setRpStatus] = useState<"idle" | "connecting" | "live" | "ended">("idle");
   const [rpError, setRpError] = useState<string | null>(null);
   const [sessionSummary, setSessionSummary] = useState<string[] | null>(null);
-  const fetchToken = useServerFn(getPrevyaConversationToken);
+  
 
   const conversation = useConversation({
     onConnect: () => setRpStatus("live"),
