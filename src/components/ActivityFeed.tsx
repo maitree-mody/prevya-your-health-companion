@@ -103,7 +103,7 @@ function FeedRow({ action }: { action: Action }) {
   return (
     <li
       className={`flex items-start gap-3 border-b border-white/5 px-5 py-3.5 animate-fade-in ${
-        isRunning ? "animate-pulse-soft" : ""
+        isRunning ? "[animation:pulse_2s_cubic-bezier(0.4,0,0.6,1)_infinite]" : ""
       }`}
     >
       <span className="mt-0.5 text-lg leading-none" aria-hidden>
