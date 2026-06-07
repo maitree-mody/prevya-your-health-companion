@@ -1,9 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { Play, Loader2 } from "lucide-react";
-import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import { synthesizeSpeech } from "@/lib/tts.functions";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/onboarding")({
@@ -29,13 +27,9 @@ const CONDITIONS = [
   "MS",
 ];
 
-const INTRO = "Hi, I'm Prevya. I'm here to help you find answers, advocate for your care, and make sure you're heard. Let's get started.";
-
 function OnboardingPage() {
   const navigate = useNavigate();
-  const tts = useServerFn(synthesizeSpeech);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [playing, setPlaying] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
   const [conditions, setConditions] = useState<string[]>([]);
@@ -43,21 +37,37 @@ function OnboardingPage() {
   const [cycleDate, setCycleDate] = useState("");
   const [saving, setSaving] = useState(false);
 
-  async function playIntro() {
+  const speakIntro = async () => {
     try {
-      setPlaying(true);
-      const { audio } = await tts({ data: { text: INTRO } });
-      const el = audioRef.current ?? new Audio();
-      el.src = audio;
-      audioRef.current = el;
-      el.onended = () => setPlaying(false);
-      await el.play();
+      setIsPlaying(true);
+      const response = await fetch(
+        "https://api.elevenlabs.io/v1/text-to-speech/21m00Tcm4TlvDq8ikWAM",
+        {
+          method: "POST",
+          headers: {
+            "xi-api-key": import.meta.env.VITE_ELEVENLABS_API_KEY,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            text: "Hi, I'm Prevya. I'm going to read everything you've ever been given by a doctor, listen to you every day, and work to get you the answers you deserve. You've been dismissed too many times. That stops now. Let's start.",
+            model_id: "eleven_monolingual_v1",
+            voice_settings: {
+              stability: 0.5,
+              similarity_boost: 0.75,
+            },
+          }),
+        },
+      );
+      const audioBlob = await response.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
+      audio.play();
+      audio.onended = () => setIsPlaying(false);
     } catch (e) {
-      console.error(e);
-      toast.error("Couldn't play audio");
-      setPlaying(false);
+      console.error("TTS error", e);
+      setIsPlaying(false);
     }
-  }
+  };
 
   function toggleCondition(c: string) {
     setConditions((prev) => (prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c]));
@@ -107,13 +117,13 @@ function OnboardingPage() {
         </p>
 
         <button
-          onClick={playIntro}
-          disabled={playing}
+          onClick={speakIntro}
+          disabled={isPlaying}
           className="mt-6 inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition hover:bg-foreground/5"
           style={{ borderColor: "#C4614A33", color: "#C4614A" }}
         >
-          {playing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4 fill-current" />}
-          Hear Prevya introduce herself
+          {isPlaying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4 fill-current" />}
+          {isPlaying ? "Playing..." : "Hear Prevya introduce herself"}
         </button>
 
         <div className="mt-10 space-y-6 rounded-2xl border border-foreground/10 bg-white/60 p-6 shadow-sm">
