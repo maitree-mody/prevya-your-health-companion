@@ -4,6 +4,7 @@ import {
   ArrowRight,
   CheckCircle2,
   FileText,
+  Loader2,
   Mail,
   Mic,
   Sparkles,
@@ -11,6 +12,7 @@ import {
 } from "lucide-react";
 import { PrevyaShell } from "@/components/PrevyaShell";
 import { supabase } from "@/integrations/supabase/client";
+import { DEMO_USER_ID, runDiagnosis } from "@/services/api";
 
 export const Route = createFileRoute("/upload")({
   head: () => ({
@@ -45,7 +47,6 @@ const ACCEPT = ".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png";
 
 function prettyLabel(filename: string) {
   const base = filename.replace(/\.[^.]+$/, "");
-  // crude title-case
   return base
     .replace(/[-_]+/g, " ")
     .replace(/\b\w/g, (c) => c.toUpperCase())
@@ -59,12 +60,14 @@ function UploadScreen() {
   const [inFlight, setInFlight] = useState<InFlight[]>([]);
   const [docs, setDocs] = useState<ProcessedDoc[]>([]);
   const [totalCount, setTotalCount] = useState(0);
+  const [diagnosing, setDiagnosing] = useState(false);
 
   useEffect(() => {
     (async () => {
       const { data, count } = await supabase
         .from("documents")
         .select("*", { count: "exact" })
+        .eq("user_id", DEMO_USER_ID)
         .order("upload_date", { ascending: false })
         .limit(20);
       if (data) {
@@ -89,7 +92,6 @@ function UploadScreen() {
       const key = `${Date.now()}-${file.name}`;
       setInFlight((p) => [...p, { key, name: file.name, progress: 8 }]);
 
-      // simulate progress while uploading
       const tick = setInterval(() => {
         setInFlight((p) =>
           p.map((f) =>
@@ -112,6 +114,7 @@ function UploadScreen() {
       const { data: inserted } = await supabase
         .from("documents")
         .insert({
+          user_id: DEMO_USER_ID,
           source: "upload",
           file_url: upErr ? null : path,
           processed_boolean: true,
@@ -127,12 +130,14 @@ function UploadScreen() {
         .single();
 
       await supabase.from("agent_actions").insert({
+        user_id: DEMO_USER_ID,
         agent_name: "intake_agent",
         action_type: "document_uploaded",
         action_detail: label,
         status: "complete",
         result: `${symptoms} symptoms · ${labs} lab values`,
         verified_boolean: true,
+        timestamp: new Date().toISOString(),
       });
 
       clearInterval(tick);
@@ -164,6 +169,16 @@ function UploadScreen() {
     e.preventDefault();
     setDragOver(false);
     if (e.dataTransfer.files?.length) handleFiles(e.dataTransfer.files);
+  };
+
+  const handleAnalyse = async () => {
+    setDiagnosing(true);
+    try {
+      await runDiagnosis();
+    } catch (err) {
+      console.error("Diagnosis error:", err);
+    }
+    navigate({ to: "/picture" });
   };
 
   const hasDocs = docs.length > 0;
@@ -312,12 +327,19 @@ function UploadScreen() {
         {hasDocs && (
           <button
             type="button"
-            onClick={() => navigate({ to: "/picture" })}
-            className="group mt-10 flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-4 text-base font-medium text-primary-foreground shadow-sm transition hover:opacity-95"
+            disabled={diagnosing}
+            onClick={handleAnalyse}
+            className="group mt-10 flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-4 text-base font-medium text-primary-foreground shadow-sm transition hover:opacity-95 disabled:opacity-70"
           >
-            <Sparkles className="h-4 w-4" />
-            Analyse My History
-            <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+            {diagnosing ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Sparkles className="h-4 w-4" />
+            )}
+            {diagnosing ? "Analysing your history…" : "Analyse My History"}
+            {!diagnosing && (
+              <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+            )}
           </button>
         )}
       </div>

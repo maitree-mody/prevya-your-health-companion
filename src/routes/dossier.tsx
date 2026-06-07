@@ -5,12 +5,14 @@ import { SectionHeader } from "@/components/SectionHeader";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Download,
+  Loader2,
   Mail,
   RefreshCw,
   Sparkles,
   CheckCircle2,
   AlertTriangle,
 } from "lucide-react";
+import { generateDossier, DEMO_USER_ID } from "@/services/api";
 
 export const Route = createFileRoute("/dossier")({
   head: () => ({
@@ -71,30 +73,21 @@ function fmtTime(d: Date) {
 
 function sourceColor(source: string | null | undefined) {
   switch ((source || "").toLowerCase()) {
-    case "upload":
-      return "bg-[#C4B5D4]";
-    case "checkin":
-      return "bg-[#A8C99A]";
-    case "email":
-      return "bg-[#E8A87C]";
-    default:
-      return "bg-muted-foreground/40";
+    case "upload": return "bg-[#C4B5D4]";
+    case "checkin": return "bg-[#A8C99A]";
+    case "email": return "bg-[#E8A87C]";
+    default: return "bg-muted-foreground/40";
   }
 }
 
 function Sparkline({ values, stroke }: { values: number[]; stroke: string }) {
-  if (!values.length) {
-    return <div className="h-10 rounded bg-muted/40" />;
-  }
-  const w = 120;
-  const h = 36;
+  if (!values.length) return <div className="h-10 rounded bg-muted/40" />;
+  const w = 120, h = 36;
   const min = Math.min(...values);
   const max = Math.max(...values);
   const range = Math.max(1, max - min);
   const step = values.length > 1 ? w / (values.length - 1) : w;
-  const points = values
-    .map((v, i) => `${i * step},${h - ((v - min) / range) * h}`)
-    .join(" ");
+  const points = values.map((v, i) => `${i * step},${h - ((v - min) / range) * h}`).join(" ");
   return (
     <svg viewBox={`0 0 ${w} ${h}`} className="h-10 w-full">
       <polyline fill="none" stroke={stroke} strokeWidth={2} points={points} />
@@ -110,15 +103,16 @@ function Dossier() {
   const [diagnosis, setDiagnosis] = useState<Diagnosis | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [loading, setLoading] = useState(false);
+  const [generating, setGenerating] = useState(false);
 
   async function load() {
     setLoading(true);
     const [u, c, e, p, d] = await Promise.all([
-      supabase.from("users").select("*").order("created_at", { ascending: false }).limit(1).maybeSingle(),
-      supabase.from("checkins").select("*").order("created_at", { ascending: false }).limit(14),
-      supabase.from("timeline_events").select("*").order("date", { ascending: false }).limit(20),
-      supabase.from("patterns").select("*").order("first_detected", { ascending: false }).limit(10),
-      supabase.from("diagnosis_results").select("*").order("created_at", { ascending: false }).limit(1).maybeSingle(),
+      supabase.from("users").select("*").eq("id", DEMO_USER_ID).maybeSingle(),
+      supabase.from("checkins").select("*").eq("user_id", DEMO_USER_ID).order("created_at", { ascending: false }).limit(14),
+      supabase.from("timeline_events").select("*").eq("user_id", DEMO_USER_ID).order("date", { ascending: false }).limit(20),
+      supabase.from("patterns").select("*").eq("user_id", DEMO_USER_ID).order("first_detected", { ascending: false }).limit(10),
+      supabase.from("diagnosis_results").select("*").eq("user_id", DEMO_USER_ID).order("created_at", { ascending: false }).limit(1).maybeSingle(),
     ]);
     setUser((u.data as UserRow) ?? null);
     setCheckins(((c.data as Checkin[]) ?? []).reverse());
@@ -129,9 +123,19 @@ function Dossier() {
     setLoading(false);
   }
 
-  useEffect(() => {
-    load();
-  }, []);
+  useEffect(() => { load(); }, []);
+
+  const handleGenerate = async () => {
+    setGenerating(true);
+    try {
+      await generateDossier();
+      await load();
+    } catch (err) {
+      console.error("Dossier generation error:", err);
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   const painSeries = useMemo(() => checkins.map((x) => x.pain_score ?? 0), [checkins]);
   const fatigueSeries = useMemo(() => checkins.map((x) => x.fatigue_score ?? 0), [checkins]);
@@ -147,32 +151,22 @@ function Dossier() {
     ];
   }, [diagnosis]);
 
-  const questions = useMemo(
-    () => [
-      "Given the cyclical pattern, is empirical hormonal therapy reasonable if imaging is negative?",
-      "What is the threshold for referral to a specialist endometriosis center?",
-      "Should I be screened for autoimmune contribution given the fatigue trajectory?",
-      "How should we sequence imaging vs. diagnostic laparoscopy?",
-    ],
-    [],
-  );
-
-  async function regenerate() {
-    await load();
-  }
+  const questions = useMemo(() => [
+    "Given the cyclical pattern, is empirical hormonal therapy reasonable if imaging is negative?",
+    "What is the threshold for referral to a specialist endometriosis center?",
+    "Should I be screened for autoimmune contribution given the fatigue trajectory?",
+    "How should we sequence imaging vs. diagnostic laparoscopy?",
+  ], []);
 
   async function emailDoctor() {
     await supabase.from("agent_actions").insert({
+      user_id: DEMO_USER_ID,
       agent_name: "advocate_agent",
       action_type: "email_sent",
       action_detail: "Dossier emailed to clinician",
       status: "pending",
     });
     alert("Prevya is sending your dossier to your doctor.");
-  }
-
-  function downloadPdf() {
-    window.print();
   }
 
   return (
@@ -184,7 +178,18 @@ function Dossier() {
         action={
           <div className="flex flex-wrap gap-2">
             <button
-              onClick={downloadPdf}
+              onClick={handleGenerate}
+              disabled={generating || loading}
+              className="inline-flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-foreground transition hover:opacity-95 disabled:opacity-60"
+            >
+              {generating
+                ? <Loader2 className="h-4 w-4 animate-spin" />
+                : <Sparkles className="h-4 w-4" />
+              }
+              {generating ? "Generating…" : diagnosis ? "Regenerate" : "Generate Dossier"}
+            </button>
+            <button
+              onClick={() => window.print()}
               className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-95"
             >
               <Download className="h-4 w-4" /> Download PDF
@@ -199,29 +204,28 @@ function Dossier() {
         }
       />
 
+      {generating && (
+        <div className="flex items-center gap-3 rounded-xl border border-accent/30 bg-accent/5 p-5">
+          <Loader2 className="h-5 w-5 animate-spin text-accent" />
+          <div>
+            <p className="text-sm font-medium">Prevya is generating your dossier…</p>
+            <p className="text-xs text-muted-foreground">Reading records, detecting patterns, drafting summary.</p>
+          </div>
+        </div>
+      )}
+
       <div className="space-y-6">
-        {/* Card 1 — Patient summary */}
         <Card title="Patient summary" eyebrow="01 · Identity">
           <div className="grid gap-x-8 gap-y-4 text-sm sm:grid-cols-2 md:grid-cols-3">
             <Field label="Name" value={user?.name ?? "—"} />
             <Field label="Age" value={user?.age ? `${user.age}` : "—"} />
-            <Field
-              label="Symptomatic since"
-              value={user?.created_at ? new Date(user.created_at).toLocaleDateString() : "—"}
-            />
-            <Field
-              label="Medications"
-              value={(user?.conditions_suspected ?? []).join(", ") || "None recorded"}
-            />
-            <Field
-              label="Fertility intent"
-              value={user?.fertility_intent ? "Yes" : "Not at this time"}
-            />
+            <Field label="Symptomatic since" value={user?.created_at ? new Date(user.created_at).toLocaleDateString() : "—"} />
+            <Field label="Conditions suspected" value={(user?.conditions_suspected ?? []).join(", ") || "None recorded"} />
+            <Field label="Fertility intent" value={user?.fertility_intent ? "Yes" : "Not at this time"} />
             <Field label="Current goal" value={user?.current_goal ?? "—"} />
           </div>
         </Card>
 
-        {/* Card 2 — Why I am here */}
         <Card title="Why I am here" eyebrow="02 · Narrative">
           <div className="border-l-4 border-primary pl-5">
             <p className="text-[15px] leading-relaxed text-foreground/85">
@@ -231,7 +235,6 @@ function Dossier() {
           </div>
         </Card>
 
-        {/* Card 3 — Symptom timeline */}
         <Card title="Symptom timeline" eyebrow="03 · Evidence">
           {events.length === 0 ? (
             <Empty text="Timeline will appear here as Prevya collects events." />
@@ -239,9 +242,7 @@ function Dossier() {
             <ol className="relative ml-2 space-y-5 border-l border-border pl-6">
               {events.map((ev) => (
                 <li key={ev.id} className="relative">
-                  <span
-                    className={`absolute -left-[31px] top-1.5 h-3 w-3 rounded-full ring-4 ring-background ${sourceColor(ev.source)}`}
-                  />
+                  <span className={`absolute -left-[31px] top-1.5 h-3 w-3 rounded-full ring-4 ring-background ${sourceColor(ev.source)}`} />
                   <div className="flex flex-wrap items-baseline gap-x-3">
                     <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                       {ev.date ? new Date(ev.date).toLocaleDateString() : "—"}
@@ -262,7 +263,6 @@ function Dossier() {
           )}
         </Card>
 
-        {/* Card 4 — Patterns identified */}
         <Card title="Patterns identified" eyebrow="04 · Synthesis">
           {patterns.length === 0 ? (
             <Empty text="Patterns will surface once Prevya has enough data." />
@@ -272,9 +272,7 @@ function Dossier() {
                 const high = (p.clinical_significance ?? "").toLowerCase().includes("high");
                 return (
                   <div key={p.id} className="flex items-start gap-4 py-4">
-                    <span
-                      className={`mt-1.5 h-2.5 w-2.5 flex-shrink-0 rounded-full ${high ? "bg-[#E8A4B8]" : "bg-muted-foreground/40"}`}
-                    />
+                    <span className={`mt-1.5 h-2.5 w-2.5 flex-shrink-0 rounded-full ${high ? "bg-[#E8A4B8]" : "bg-muted-foreground/40"}`} />
                     <div className="flex-1">
                       <p className="text-sm font-medium text-foreground">{p.pattern_description ?? "—"}</p>
                       {p.clinical_significance && (
@@ -288,7 +286,6 @@ function Dossier() {
           )}
         </Card>
 
-        {/* Card 5 — Current picture */}
         <Card title="Current picture" eyebrow="05 · Trends">
           <div className="grid gap-4 sm:grid-cols-3">
             <Metric label="Pain trend" series={painSeries} stroke="#E8A87C" />
@@ -297,43 +294,29 @@ function Dossier() {
           </div>
         </Card>
 
-        {/* Card 6 — Recommended investigations */}
         <Card title="Recommended investigations" eyebrow="06 · Asks">
           <ul className="space-y-3">
             {tests.map((t, i) => {
               const urgency = (t.urgency ?? "routine").toLowerCase();
-              const dot =
-                urgency === "urgent"
-                  ? "bg-rose-500"
-                  : urgency === "soon"
-                    ? "bg-amber-500"
-                    : "bg-emerald-500";
+              const dot = urgency === "urgent" ? "bg-rose-500" : urgency === "soon" ? "bg-amber-500" : "bg-emerald-500";
               return (
                 <li key={i} className="flex items-start gap-3 rounded-xl border bg-card/40 p-4">
                   <span className={`mt-1.5 h-2.5 w-2.5 flex-shrink-0 rounded-full ${dot}`} />
                   <div className="flex-1">
                     <p className="text-sm font-medium">{t.name ?? "Investigation"}</p>
-                    {t.rationale && (
-                      <p className="mt-0.5 text-xs text-muted-foreground">{t.rationale}</p>
-                    )}
+                    {t.rationale && <p className="mt-0.5 text-xs text-muted-foreground">{t.rationale}</p>}
                   </div>
-                  <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                    {urgency}
-                  </span>
+                  <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{urgency}</span>
                 </li>
               );
             })}
           </ul>
         </Card>
 
-        {/* Card 7 — Questions for my doctor */}
         <Card title="Questions for my doctor" eyebrow="07 · Conversation">
           <ol className="space-y-3">
             {questions.map((q, i) => (
-              <li
-                key={i}
-                className="flex items-start gap-4 rounded-2xl bg-secondary/30 p-4"
-              >
+              <li key={i} className="flex items-start gap-4 rounded-2xl bg-secondary/30 p-4">
                 <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
                   {i + 1}
                 </span>
@@ -343,7 +326,6 @@ function Dossier() {
           </ol>
         </Card>
 
-        {/* Prevya note */}
         <div className="rounded-2xl bg-secondary/30 p-5 text-sm">
           <div className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.18em] text-secondary-foreground">
             <Sparkles className="h-3.5 w-3.5" /> Prevya note for the clinician
@@ -355,15 +337,14 @@ function Dossier() {
           </p>
         </div>
 
-        {/* Regenerate */}
         <div className="flex justify-center pt-2">
           <button
-            onClick={regenerate}
+            onClick={load}
             disabled={loading}
             className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition hover:opacity-95 disabled:opacity-60"
           >
             <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-            {loading ? "Rebuilding…" : "Regenerate Dossier"}
+            {loading ? "Rebuilding…" : "Refresh Dossier"}
           </button>
         </div>
       </div>
@@ -371,22 +352,10 @@ function Dossier() {
   );
 }
 
-function Card({
-  title,
-  eyebrow,
-  children,
-}: {
-  title: string;
-  eyebrow?: string;
-  children: React.ReactNode;
-}) {
+function Card({ title, eyebrow, children }: { title: string; eyebrow?: string; children: React.ReactNode }) {
   return (
     <section className="surface p-6 md:p-8">
-      {eyebrow && (
-        <div className="mb-1 text-[11px] font-medium uppercase tracking-[0.18em] text-accent">
-          {eyebrow}
-        </div>
-      )}
+      {eyebrow && <div className="mb-1 text-[11px] font-medium uppercase tracking-[0.18em] text-accent">{eyebrow}</div>}
       <h2 className="mb-5 font-display text-xl font-semibold tracking-tight">{title}</h2>
       {children}
     </section>
@@ -396,40 +365,26 @@ function Card({
 function Field({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-        {label}
-      </div>
+      <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{label}</div>
       <div className="mt-1 text-sm text-foreground">{value}</div>
     </div>
   );
 }
 
-function Metric({
-  label,
-  series,
-  stroke,
-}: {
-  label: string;
-  series: number[];
-  stroke: string;
-}) {
+function Metric({ label, series, stroke }: { label: string; series: number[]; stroke: string }) {
   const latest = series[series.length - 1] ?? 0;
   const prev = series[series.length - 2] ?? latest;
   const delta = latest - prev;
   return (
     <div className="rounded-xl border bg-card/40 p-4">
-      <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-        {label}
-      </div>
+      <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{label}</div>
       <div className="mt-1 flex items-baseline gap-2">
         <span className="font-display text-2xl font-semibold">{latest}</span>
         <span className="text-xs text-muted-foreground">
           {delta === 0 ? "no change" : delta > 0 ? `▲ ${delta}` : `▼ ${Math.abs(delta)}`}
         </span>
       </div>
-      <div className="mt-2">
-        <Sparkline values={series} stroke={stroke} />
-      </div>
+      <div className="mt-2"><Sparkline values={series} stroke={stroke} /></div>
     </div>
   );
 }

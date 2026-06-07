@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { PrevyaShell } from "@/components/PrevyaShell";
 import { SectionHeader } from "@/components/SectionHeader";
 import { MonitoringDashboard } from "@/components/MonitoringDashboard";
@@ -13,7 +14,15 @@ import {
   Loader2,
   Mic,
   Target,
+  Play,
+  RotateCcw,
 } from "lucide-react";
+import {
+  getAgentFeed,
+  subscribeToFeed,
+  runFullDemo,
+  resetDemo,
+} from "@/services/api";
 
 export const Route = createFileRoute("/home")({
   head: () => ({
@@ -29,13 +38,32 @@ export const Route = createFileRoute("/home")({
   component: Home,
 });
 
-const feed = [
-  { t: "2 min ago", agent: "ReaderAgent", text: "Parsed bloodwork from Apr 14 — flagged low ferritin (24 ng/mL).", status: "done" as const },
-  { t: "11 min ago", agent: "InboxAgent", text: "Drafted reply to Dr. Chen requesting CA-125 + AMH panel.", status: "pending" as const },
-  { t: "38 min ago", agent: "PatternAgent", text: "Detected pain spikes correlate with luteal phase across 3 cycles.", status: "done" as const },
-  { t: "1 h ago", agent: "SchedulerAgent", text: "Found 2 rheumatology openings within 20km — awaiting your pick.", status: "blocked" as const },
-  { t: "3 h ago", agent: "DossierAgent", text: "Regenerated clinical summary v8 with new pattern.", status: "done" as const },
-];
+type LiveFeedItem = {
+  id: string;
+  agent_name: string | null;
+  action_type: string | null;
+  action_detail: string | null;
+  status: string | null;
+  timestamp: string | null;
+};
+
+function feedStatus(status: string | null): "done" | "pending" | "blocked" {
+  const s = (status ?? "").toLowerCase();
+  if (s === "complete" || s === "done" || s === "confirmed") return "done";
+  if (s === "blocked" || s === "attention" || s === "needs_attention") return "blocked";
+  return "pending";
+}
+
+function timeAgo(iso: string | null) {
+  if (!iso) return "just now";
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return "just now";
+  if (m < 60) return `${m} min ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
+}
 
 const actions = [
   { title: "Book rheumatology consult", detail: "Two slots open this week — pick one and I'll confirm.", urgency: "high" },
@@ -44,6 +72,50 @@ const actions = [
 ];
 
 function Home() {
+  const [liveFeed, setLiveFeed] = useState<LiveFeedItem[]>([]);
+  const [feedLoading, setFeedLoading] = useState(true);
+  const [demoRunning, setDemoRunning] = useState(false);
+  const [resetting, setResetting] = useState(false);
+
+  useEffect(() => {
+    getAgentFeed().then((data) => {
+      setLiveFeed(data as LiveFeedItem[]);
+      setFeedLoading(false);
+    });
+
+    const channel = subscribeToFeed((action) => {
+      setLiveFeed((prev) => [action as LiveFeedItem, ...prev].slice(0, 50));
+    });
+
+    return () => { channel.unsubscribe(); };
+  }, []);
+
+  const handleRunDemo = async () => {
+    setDemoRunning(true);
+    try {
+      await runFullDemo();
+      // Items trickle in over 14s via setTimeout; real-time subscription picks them up
+      setTimeout(() => setDemoRunning(false), 15000);
+    } catch (err) {
+      console.error(err);
+      setDemoRunning(false);
+    }
+  };
+
+  const handleReset = async () => {
+    setResetting(true);
+    try {
+      await resetDemo();
+      setLiveFeed([]);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setResetting(false);
+    }
+  };
+
+  const runningCount = liveFeed.filter((f) => feedStatus(f.status) === "pending").length;
+
   return (
     <PrevyaShell>
       <SectionHeader
@@ -51,17 +123,39 @@ function Home() {
         title="Good morning. Here's what I'm working on."
         description="Prevya runs in the background — reading, listening, advocating. Tap anything to dive in."
         action={
-          <button className="flex items-center gap-2 rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-accent-foreground shadow-sm transition hover:opacity-95">
-            <Mic className="h-4 w-4" /> Daily check-in
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <button className="flex items-center gap-2 rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-accent-foreground shadow-sm transition hover:opacity-95">
+              <Mic className="h-4 w-4" /> Daily check-in
+            </button>
+            <button
+              onClick={handleRunDemo}
+              disabled={demoRunning}
+              className="flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition hover:opacity-95 disabled:opacity-60"
+            >
+              {demoRunning
+                ? <Loader2 className="h-4 w-4 animate-spin" />
+                : <Play className="h-4 w-4" />
+              }
+              {demoRunning ? "Running…" : "Run Demo"}
+            </button>
+            <button
+              onClick={handleReset}
+              disabled={resetting}
+              className="flex items-center gap-2 rounded-full border bg-card px-5 py-2.5 text-sm font-medium transition hover:border-accent disabled:opacity-60"
+            >
+              {resetting
+                ? <Loader2 className="h-4 w-4 animate-spin" />
+                : <RotateCcw className="h-4 w-4" />
+              }
+              Reset
+            </button>
+          </div>
         }
       />
 
       <ActivityFeed />
 
       <OrchestratorPanel />
-
-
 
       {/* Goal + appointment row */}
       <div className="grid gap-5 lg:grid-cols-3">
@@ -123,9 +217,7 @@ function Home() {
                       a.urgency === "high" && "bg-accent",
                       a.urgency === "medium" && "bg-warning",
                       a.urgency === "low" && "bg-secondary",
-                    ]
-                      .filter(Boolean)
-                      .join(" ")}
+                    ].filter(Boolean).join(" ")}
                   />
                   <div>
                     <div className="text-sm font-medium">{a.title}</div>
@@ -140,28 +232,44 @@ function Home() {
         <div className="surface lg:col-span-3 p-6">
           <div className="flex items-center justify-between">
             <h2 className="font-display text-lg font-semibold tracking-tight">Live activity</h2>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-success/30 px-2.5 py-1 text-xs font-medium text-success-foreground">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-success" /> 4 agents working
-            </span>
+            {feedLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            ) : (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-success/30 px-2.5 py-1 text-xs font-medium text-success-foreground">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-success" />
+                {runningCount > 0 ? `${runningCount} agent${runningCount > 1 ? "s" : ""} working` : "Live"}
+              </span>
+            )}
           </div>
-          <ul className="mt-4 divide-y">
-            {feed.map((f, i) => (
-              <li key={i} className="flex gap-3 py-3.5">
-                <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted">
-                  {f.status === "done" && <CheckCircle2 className="h-4 w-4 text-success-foreground" />}
-                  {f.status === "pending" && <Loader2 className="h-4 w-4 animate-spin text-accent" />}
-                  {f.status === "blocked" && <AlertCircle className="h-4 w-4 text-warning-foreground" />}
-                </div>
-                <div className="flex-1">
-                  <div className="flex flex-wrap items-baseline gap-2">
-                    <span className="text-sm font-medium">{f.agent}</span>
-                    <span className="text-xs text-muted-foreground">{f.t}</span>
-                  </div>
-                  <p className="text-sm text-foreground/80">{f.text}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
+
+          {!feedLoading && liveFeed.length === 0 ? (
+            <div className="mt-6 rounded-xl border border-dashed bg-muted/30 p-6 text-center text-sm text-muted-foreground">
+              No activity yet — press <strong>Run Demo</strong> to watch agents fire in real time.
+            </div>
+          ) : (
+            <ul className="mt-4 divide-y">
+              {liveFeed.slice(0, 8).map((f, i) => {
+                const s = feedStatus(f.status);
+                return (
+                  <li key={f.id ?? i} className="flex gap-3 py-3.5">
+                    <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted">
+                      {s === "done"    && <CheckCircle2 className="h-4 w-4 text-success-foreground" />}
+                      {s === "pending" && <Loader2 className="h-4 w-4 animate-spin text-accent" />}
+                      {s === "blocked" && <AlertCircle className="h-4 w-4 text-warning-foreground" />}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex flex-wrap items-baseline gap-2">
+                        <span className="text-sm font-medium">{f.agent_name ?? "Agent"}</span>
+                        <span className="text-xs text-muted-foreground">{timeAgo(f.timestamp)}</span>
+                      </div>
+                      <p className="text-sm text-foreground/80">{f.action_detail}</p>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+
           <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
             <Activity className="h-3.5 w-3.5" /> Updated continuously
           </div>

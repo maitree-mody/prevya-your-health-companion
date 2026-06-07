@@ -3,6 +3,7 @@ import { useState } from "react";
 import {
   ArrowRight,
   Heart,
+  Loader2,
   Mail,
   Mic,
   Play,
@@ -10,6 +11,8 @@ import {
   Upload,
 } from "lucide-react";
 import { PrevyaShell } from "@/components/PrevyaShell";
+import { supabase } from "@/integrations/supabase/client";
+import { DEMO_USER_ID } from "@/services/api";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -44,6 +47,7 @@ function Onboarding() {
   const [fertility, setFertility] = useState(false);
   const [cycleStart, setCycleStart] = useState("");
   const [playingIntro, setPlayingIntro] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const toggle = (c: string) =>
     setConditions((prev) =>
@@ -59,6 +63,28 @@ function Onboarding() {
     utter.pitch = 1.0;
     utter.onend = () => setPlayingIntro(false);
     window.speechSynthesis.speak(utter);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await supabase.from("users").upsert({
+        id: DEMO_USER_ID,
+        name: name.trim() || "Sarah",
+        age: parseInt(age) || 34,
+        conditions_suspected: conditions.length > 0 ? conditions : ["Lupus", "APS"],
+        fertility_intent: fertility,
+        cycle_start_dates: cycleStart ? [cycleStart] : null,
+        current_goal: "Get a real diagnosis for the pelvic pain — and a plan.",
+        goal_set_date: new Date().toISOString(),
+      });
+    } catch (err) {
+      console.error("Failed to save user:", err);
+    } finally {
+      setSaving(false);
+      navigate({ to: "/home" });
+    }
   };
 
   return (
@@ -88,13 +114,7 @@ function Onboarding() {
           </span>
         </button>
 
-        <form
-          className="mt-10 space-y-7"
-          onSubmit={(e) => {
-            e.preventDefault();
-            navigate({ to: "/home" });
-          }}
-        >
+        <form className="mt-10 space-y-7" onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
             <Field label="Your name">
               <input
@@ -191,11 +211,16 @@ function Onboarding() {
 
           <button
             type="submit"
-            className="group mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-4 text-base font-medium text-primary-foreground shadow-sm transition hover:opacity-95"
+            disabled={saving}
+            className="group mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-4 text-base font-medium text-primary-foreground shadow-sm transition hover:opacity-95 disabled:opacity-70"
           >
-            <Sparkles className="h-4 w-4" />
-            Start with Prevya
-            <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+            {saving ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Sparkles className="h-4 w-4" />
+            )}
+            {saving ? "Saving…" : "Start with Prevya"}
+            {!saving && <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />}
           </button>
         </form>
       </div>

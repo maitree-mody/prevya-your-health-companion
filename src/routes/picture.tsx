@@ -4,6 +4,7 @@ import { SectionHeader } from "@/components/SectionHeader";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Sparkles, AlertCircle } from "lucide-react";
+import { DEMO_USER_ID } from "@/services/api";
 
 export const Route = createFileRoute("/picture")({
   head: () => ({
@@ -34,20 +35,20 @@ const LOADING_STEPS = [
 ];
 
 const levelStyles: Record<Level, { pill: string; label: string }> = {
-  low: { pill: "bg-success/30 text-foreground border-success/50", label: "Low likelihood" },
-  moderate: { pill: "bg-warning/30 text-foreground border-warning/60", label: "Moderate likelihood" },
-  high: { pill: "bg-accent/30 text-foreground border-accent/60", label: "High likelihood" },
+  low:      { pill: "bg-success/30 text-foreground border-success/50",  label: "Low likelihood"      },
+  moderate: { pill: "bg-warning/30 text-foreground border-warning/60",  label: "Moderate likelihood" },
+  high:     { pill: "bg-accent/30 text-foreground border-accent/60",    label: "High likelihood"     },
 };
 
 const priorityDot: Record<Test["priority"], string> = {
-  urgent: "bg-accent",
-  soon: "bg-warning",
+  urgent:  "bg-accent",
+  soon:    "bg-warning",
   routine: "bg-success",
 };
 
 const priorityLabel: Record<Test["priority"], string> = {
-  urgent: "Urgent",
-  soon: "Soon",
+  urgent:  "Urgent",
+  soon:    "Soon",
   routine: "Routine",
 };
 
@@ -62,15 +63,16 @@ function Picture() {
       const { data: rows } = await supabase
         .from("diagnosis_results")
         .select("conditions, recommended_tests, cross_patterns, doctor_summary")
+        .eq("user_id", DEMO_USER_ID)
         .order("created_at", { ascending: false })
         .limit(1);
       const row = rows?.[0];
       if (row) {
         setData({
-          conditions: (row.conditions as unknown as Condition[]) ?? [],
-          recommended_tests: (row.recommended_tests as unknown as Test[]) ?? [],
-          cross_patterns: (row.cross_patterns as unknown as Pattern[]) ?? [],
-          doctor_summary: row.doctor_summary ?? "",
+          conditions:        (row.conditions        as unknown as Condition[]) ?? [],
+          recommended_tests: (row.recommended_tests as unknown as Test[])     ?? [],
+          cross_patterns:    (row.cross_patterns    as unknown as Pattern[])  ?? [],
+          doctor_summary:    row.doctor_summary ?? "",
         });
       } else {
         setData({ conditions: [], recommended_tests: [], cross_patterns: [], doctor_summary: "" });
@@ -109,6 +111,14 @@ function Picture() {
             ))}
           </div>
         </div>
+      ) : data.conditions.length === 0 ? (
+        <div className="surface flex flex-col items-center gap-3 p-16 text-center">
+          <Sparkles className="h-7 w-7 text-muted-foreground" />
+          <p className="font-display text-lg font-medium tracking-tight">No diagnosis results yet.</p>
+          <p className="text-sm text-muted-foreground">
+            Upload your records and press <strong>Analyse My History</strong> to generate your picture.
+          </p>
+        </div>
       ) : (
         <div className="space-y-8">
           {/* Section 1 */}
@@ -124,9 +134,7 @@ function Picture() {
                   <div key={c.name} className="surface p-5">
                     <div className="flex items-start justify-between gap-3">
                       <h3 className="font-display text-base font-semibold leading-tight">{c.name}</h3>
-                      <span
-                        className={`shrink-0 rounded-full border px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wider ${s.pill}`}
-                      >
+                      <span className={`shrink-0 rounded-full border px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wider ${s.pill}`}>
                         {c.level}
                       </span>
                     </div>
