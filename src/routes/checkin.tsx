@@ -1,10 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useConversation } from "@elevenlabs/react";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Mic, MicOff, CheckCircle2, Settings2 } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Mic, MicOff, CheckCircle2 } from "lucide-react";
 import { PrevyaShell } from "@/components/PrevyaShell";
 import { SectionHeader } from "@/components/SectionHeader";
 import { supabase } from "@/integrations/supabase/client";
+
+const PREVYA_AGENT_ID = "agent_5901kth9g167f7grv0ndphzkz8ss";
 
 export const Route = createFileRoute("/checkin")({
   head: () => ({
